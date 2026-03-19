@@ -69,8 +69,8 @@ export class Board {
     }
   }
 
-  indexOf(piece: Piece): number {
-    return this.squares.indexOf(piece);
+  indexOf(piece: MaybePiece): number {
+    return piece === null ? -1 : this.squares.indexOf(piece);
   }
 
   rankOf(piece: Piece): number {

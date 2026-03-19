@@ -1,0 +1,46 @@
+@layer components {
+  .board {
+    --board-size: calc(min(100vh, 100vw));
+    --cell-bg-white: green;
+    --cell-bg-black: orange;
+    --cell-bg-selected: deepskyblue;
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    width: var(--board-size);
+    height: var(--board-size);
+  }
+
+  .cell {
+    background-color: var(--cell-bg-white);
+    user-select: none;
+    position: relative;
+
+    &:nth-of-type(16n + 1),
+    &:nth-of-type(16n + 3),
+    &:nth-of-type(16n + 5),
+    &:nth-of-type(16n + 7),
+    &:nth-of-type(16n + 10),
+    &:nth-of-type(16n + 12),
+    &:nth-of-type(16n + 14),
+    &:nth-of-type(16n + 16) {
+      background-color: var(--cell-bg-black);
+    }
+
+    img {
+      pointer-events: none;
+      --cell-image-size: 85%;
+
+      width: var(--cell-image-size);
+      height: var(--cell-image-size);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+    }
+
+    &.is-selected {
+      background-color: var(--cell-bg-selected);
+    }
+  }
+}

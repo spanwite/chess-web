@@ -1,8 +1,9 @@
 import { useMemo } from 'preact/hooks';
-import { Board } from './models/Board';
+import { Board as BoardModel } from './models/Board';
+import { Board } from './components/Board';
 
 export function App() {
-  const board = useMemo(() => new Board(), []);
+  const board = useMemo(() => new BoardModel(), []);
 
-  return <div>helloWorld</div>;
+  return <Board model={board} />;
 }
