@@ -1,3 +1,5 @@
+import type { Board } from '../Board';
+
 export enum PieceColor {
   White = 'white',
   Black = 'black',
@@ -15,4 +17,6 @@ export enum PieceName {
 export interface IPiece {
   name: PieceName;
   color: PieceColor;
+
+  getLegalMoves(board: Board): number[];
 }

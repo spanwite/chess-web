@@ -3,8 +3,8 @@ import { Piece } from './Piece';
 import { PieceColor, PieceName } from './types';
 
 export class Pawn extends Piece {
-  constructor(color: PieceColor) {
-    super(PieceName.Pawn, color);
+  constructor(color: PieceColor, board: Board) {
+    super(PieceName.Pawn, color, board);
   }
 
   getInitialRank() {
@@ -12,28 +12,44 @@ export class Pawn extends Piece {
   }
 
   getMovesOffsets() {
-    const direction = this.isWhite ? 1 : -1;
     return {
-      short: 8 * direction,
-      long: 16 * direction,
-      captureLeft: 9 * direction,
-      captureRight: 7 * direction,
+      short: 8,
+      long: 16,
+      captureLeft: this.isWhite ? 9 : 7,
+      captureRight: this.isWhite ? 7 : 9,
     };
   }
 
-  getPseudoLegalMoves(board: Board): number[] {
+  calculateOffset(offset: number) {}
+
+  override getLegalMoves(board: Board): number[] {
+    const selfIndex = board.indexOf(this);
+    const selfRank = board.rankOf(this);
+    const selfFile = board.fileOf(this);
+
     const moves: number[] = [];
     const movesOffsets = this.getMovesOffsets();
 
-    moves.push(movesOffsets.short);
+    const calculateOffset = (offset: number) => {
+      const direction = this.isWhite ? -1 : 1;
+      const index = selfIndex + offset * direction;
+      if (index > board.length || index < 0) return;
+      moves.push(index);
+    };
 
-    moves.push(movesOffsets.captureLeft);
+    calculateOffset(movesOffsets.short);
 
-    moves.push(movesOffsets.captureRight);
+    if (selfFile !== 'a') {
+      calculateOffset(movesOffsets.captureLeft);
+    }
 
-    const isAtInitialRank = board.rankOf(this) === this.getInitialRank();
+    if (selfFile !== 'h') {
+      calculateOffset(movesOffsets.captureRight);
+    }
+
+    const isAtInitialRank = selfRank === this.getInitialRank();
     if (isAtInitialRank) {
-      moves.push(movesOffsets.long);
+      calculateOffset(movesOffsets.long);
     }
 
     return moves;

@@ -27,7 +27,7 @@ export class Board {
     console.log('🚀 randomPawnIndex:', randomPawnIndex);
     const randomPawnRank = this.rankOf(randomPawn);
     console.log('🚀 randomPawnRank:', randomPawnRank);
-    const legalMoves = randomPawn.getPseudoLegalMoves(this);
+    const legalMoves = randomPawn.getLegalMoves(this);
     console.log('🚀 legalMoves:', legalMoves);
   }
 
@@ -63,10 +63,17 @@ export class Board {
           continue;
         }
 
-        this.squares[index] = Piece.fromCharFEN(square);
+        this.squares[index] = Piece.fromCharFEN(square, this);
         index++;
       }
     }
+  }
+
+  movePiece(piece: MaybePiece, toIndex: number): void {
+    if (!piece) return;
+    const fromIndex = this.indexOf(piece);
+    this.squares[toIndex] = piece;
+    this.squares[fromIndex] = null;
   }
 
   indexOf(piece: MaybePiece): number {

@@ -1,0 +1,64 @@
+.board {
+  --board-size: calc(min(100vh, 100vw));
+  --square-bg-white: green;
+  --square-bg-black: orange;
+  --square-bg-selected: deepskyblue;
+  --square-bg-available: purple;
+  --square-bg-available-mark: var(--square-bg-available);
+  --square-image-size: 85%;
+  --square-mark-size: 20%;
+
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  width: var(--board-size);
+  height: var(--board-size);
+}
+
+.square {
+  background-color: var(--square-bg-white);
+  user-select: none;
+  position: relative;
+
+  &:nth-of-type(16n + 1),
+  &:nth-of-type(16n + 3),
+  &:nth-of-type(16n + 5),
+  &:nth-of-type(16n + 7),
+  &:nth-of-type(16n + 10),
+  &:nth-of-type(16n + 12),
+  &:nth-of-type(16n + 14),
+  &:nth-of-type(16n + 16) {
+    background-color: var(--square-bg-black);
+  }
+
+  img {
+    pointer-events: none;
+
+    width: var(--square-image-size);
+    height: var(--square-image-size);
+  }
+
+  &.is-selected {
+    background-color: var(--square-bg-selected);
+  }
+
+  &.is-available {
+    background-color: var(--square-bg-available);
+  }
+}
+
+.square-mark {
+  width: var(--square-mark-size);
+  height: var(--square-mark-size);
+  border-radius: 100%;
+  background-color: var(--square-bg-available-mark);
+}
+
+.square-index {
+  text-shadow: 0 0 0.25em black;
+  position: absolute;
+  font-size: 0.875rem;
+  top: 0.2rem;
+  left: 0.2rem;
+  color: white;
+  font-weight: 600;
+}
