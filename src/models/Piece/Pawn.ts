@@ -22,7 +22,8 @@ export class Pawn extends Piece {
 
   calculateOffset(offset: number) {}
 
-  override getLegalMoves(board: Board): number[] {
+  getLegalMovesS(): number[] {
+    const board = this.board;
     const selfIndex = board.indexOf(this);
     const selfRank = board.rankOf(this);
     const selfFile = board.fileOf(this);

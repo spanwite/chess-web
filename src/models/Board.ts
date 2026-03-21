@@ -1,4 +1,6 @@
-import { Pawn, Piece, type MaybePiece } from './Piece';
+import { isUppercase } from '@/utils/string';
+import { Pawn, Piece, PieceColor, type MaybePiece } from './Piece';
+import { Queen } from './Piece/Queen';
 
 type BoardFile = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
 
@@ -15,20 +17,12 @@ export class Board {
   ];
   readonly size = 8;
   readonly length = this.size * this.size;
-  static initialFEN = '8/pppppppp/8/8/8/8/PPPPPPPP/8';
+  static initialFEN = '3q4/pppppppp/8/8/8/8/PPPPPPPP/4Q3';
 
   squares: MaybePiece[] = new Array(Board.length).fill(null);
 
   constructor() {
     this.loadFEN(Board.initialFEN);
-
-    const randomPawn = this.getRandomPiece([Pawn])!;
-    const randomPawnIndex = this.indexOf(randomPawn);
-    console.log('🚀 randomPawnIndex:', randomPawnIndex);
-    const randomPawnRank = this.rankOf(randomPawn);
-    console.log('🚀 randomPawnRank:', randomPawnRank);
-    const legalMoves = randomPawn.getLegalMoves(this);
-    console.log('🚀 legalMoves:', legalMoves);
   }
 
   getRandomPiece<T extends Piece = Piece>(
@@ -63,10 +57,20 @@ export class Board {
           continue;
         }
 
-        this.squares[index] = Piece.fromCharFEN(square, this);
+        this.squares[index] = this.createPieceFromFEN(square);
         index++;
       }
     }
+  }
+
+  createPieceFromFEN(char: string): MaybePiece {
+    const constructor = {
+      p: Pawn,
+      q: Queen,
+    }[char.toLowerCase()];
+    if (!constructor) return null;
+    const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;
+    return new constructor(color, this);
   }
 
   movePiece(piece: MaybePiece, toIndex: number): void {

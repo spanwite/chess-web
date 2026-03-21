@@ -7,13 +7,16 @@ export function Board({ model: board }: { model: BoardModel }) {
   const [selectedPiece, setSelectedPiece] = useState<Piece | null>(null);
 
   const legalMoves: number[] = useMemo(() => {
-    return selectedPiece?.getLegalMoves(board) || [];
+    return selectedPiece?.getLegalMoves() || [];
   }, [selectedPiece]);
 
   const handleSquareClick = (index: number) => {
     const piece = board.pieceAt(index);
+
     if (legalMoves.includes(index)) {
       board.movePiece(selectedPiece, index);
+      setSelectedPiece(null);
+    } else if (piece === selectedPiece) {
       setSelectedPiece(null);
     } else {
       setSelectedPiece(piece);
