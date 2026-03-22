@@ -7,15 +7,9 @@ export class Queen extends Piece {
     super(PieceName.Queen, color, board);
   }
 
-  getLegalMoves(): number[] {
-    return super.getLegalMoves().filter((index) => {
-      if (!this.isSameVertical(index)) {
-        return false;
-      }
-      if (!this.canMoveVerticallyTo(index)) {
-        return false;
-      }
-      return true;
-    });
+  getLegalMoves() {
+    return super
+      .getLegalMoves()
+      .filter((moveIndex) => super.canMoveDiagonally(moveIndex));
   }
 }

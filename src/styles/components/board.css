@@ -5,9 +5,13 @@
   --square-bg-selected: deepskyblue;
   --square-bg-available: purple;
   --square-bg-available-mark: var(--square-bg-available);
-  --square-image-size: 85%;
+  --piece-size: 90%;
   --square-mark-size: 20%;
 
+  position: relative;
+}
+
+.squares {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   width: var(--board-size);
@@ -30,19 +34,16 @@
     background-color: var(--square-bg-black);
   }
 
-  img {
-    pointer-events: none;
-
-    width: var(--square-image-size);
-    height: var(--square-image-size);
-  }
-
   &.is-selected {
     background-color: var(--square-bg-selected);
   }
 
   &.is-available {
     background-color: var(--square-bg-available);
+  }
+
+  * {
+    pointer-events: none;
   }
 }
 
@@ -61,4 +62,31 @@
   left: 0.2rem;
   color: white;
   font-weight: 600;
+}
+
+.pieces {
+  width: 100%;
+  height: 100%;
+
+  * {
+    pointer-events: none;
+  }
+}
+
+.piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12.5%;
+  height: 12.5%;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+
+  img {
+    width: var(--piece-size);
+    height: var(--piece-size);
+  }
 }

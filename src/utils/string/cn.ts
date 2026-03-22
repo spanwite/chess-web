@@ -1,7 +1,3 @@
-export function isUppercase(char: string) {
-  return char.toUpperCase() === char ? true : false;
-}
-
 type NestedArray<T> = Array<T | NestedArray<T>>;
 
 type CnValue = string | null | undefined | number | boolean;
@@ -9,13 +5,6 @@ type CnClass = string | number;
 type CnRecord = Record<CnClass, CnValue>;
 
 export type CnInput = CnValue | CnRecord | NestedArray<CnValue | CnRecord>;
-
-const result = cn(1, 2, 3, '12', '13', [
-  '10',
-  '10',
-  ['10', 10, { 'hello-world': true }],
-]);
-console.log('🚀 result:', result);
 
 export function cn(...inputs: CnInput[]): string {
   const classes: CnClass[] = [];

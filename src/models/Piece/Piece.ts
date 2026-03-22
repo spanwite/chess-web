@@ -1,146 +1,135 @@
-import { type IPiece, PieceName, PieceColor } from './types';
+import { PieceName, PieceColor } from './types';
 import type { Board } from '../Board';
+import { generateId } from '@/utils/string';
 
-export type MaybePiece = Piece | null;
+export type Position = { x: number; y: number };
 
-export type Direction = 'vertial' | 'horizontal' | 'ascending' | 'descending';
+export class Piece {
+  public readonly id = generateId();
+  public index = -1;
 
-export class Piece implements IPiece {
-  readonly name: PieceName;
-  readonly color: PieceColor;
-  protected readonly board: Board;
-
-  constructor(name: PieceName, color: PieceColor, board: Board) {
-    this.name = name;
-    this.color = color;
-    this.board = board;
-  }
-
-  // static fromCharFEN(char: string, board: Board): MaybePiece {
-  //   const constructor = {
-  //     p: Pawn,
-  //     q: Queen,
-  //   }[char.toLowerCase()];
-  //   if (!constructor) return null;
-  //   const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;
-  //   return new constructor(color, board);
-  // }
+  constructor(
+    public readonly name: PieceName,
+    public readonly color: PieceColor,
+    protected readonly board: Board
+  ) {}
 
   get isWhite() {
     return this.color === PieceColor.White;
   }
 
-  getIndex() {
-    return this.board.indexOf(this);
-  }
-
-  getLegalMoves() {
-    const moves: number[] = [];
-    this.board.squares.forEach((square, index) => {
-      if (this.canMove(square)) {
-        moves.push(index);
-      }
-    });
-    return moves;
+  getCoordinates() {
+    return this.board.coordinatesOf(this.index);
   }
 
   isSameColor(piece: Piece) {
     return this.color === piece.color;
   }
 
-  isSameVertical(index: number) {
-    const size = this.board.size;
-    const selfIndex = this.board.indexOf(this);
-    return index % size === selfIndex % size;
+  onSameDiagonal(index: number): boolean;
+  onSameDiagonal(x: number, y: number): boolean;
+  onSameDiagonal(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+    return selfCoords.y + selfCoords.x === targetCoords.y + targetCoords.x;
   }
 
-  canMoveVerticallyTo(index: number) {
-    const size = this.board.size;
-    const selfIndex = this.board.indexOf(this);
+  onSameAntiDiagonal(index: number): boolean;
+  onSameAntiDiagonal(x: number, y: number): boolean;
+  onSameAntiDiagonal(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+    return selfCoords.y - selfCoords.x === targetCoords.y - targetCoords.x;
+  }
 
-    for (
-      let i = Math.min(selfIndex, index) + size;
-      i < Math.max(selfIndex, index);
-      i += size
-    ) {
-      const piece = this.board.pieceAt(i);
-      if (piece) {
+  canMoveDiagonally(index: number): boolean;
+  canMoveDiagonally(x: number, y: number): boolean;
+  canMoveDiagonally(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+
+    if (!this.onSameDiagonal(targetCoords.x, targetCoords.y)) {
+      return false;
+    }
+
+    const minY = Math.min(selfCoords.y, targetCoords.y);
+    const maxY = Math.max(selfCoords.y, targetCoords.y);
+    const minX = Math.min(selfCoords.x, targetCoords.x);
+    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    let x = minX + 1;
+    let y = maxY - 1;
+
+    while (x < maxX) {
+      if (this.board.pieceAt(x, y) !== null) {
         return false;
       }
+      x++;
+      y--;
     }
 
     return true;
   }
 
-  canMove(square: MaybePiece): boolean {
-    if (!square) return true;
-    if (this.isSameColor(square)) return false;
-    if (square.name === PieceName.King) return false;
+  canMoveHorizontally(index: number): boolean;
+  canMoveHorizontally(x: number, y: number): boolean;
+  canMoveHorizontally(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+    if (selfCoords.y !== targetCoords.y) return false;
+
+    const minX = Math.min(selfCoords.x, targetCoords.x);
+    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    for (let x = minX + 1; x < maxX; x++) {
+      if (this.board.pieceAt(x, selfCoords.y) !== null) return false;
+    }
     return true;
   }
 
-  bakGetVerticalLegalMoves(
-    direction: 'next' | 'previous' | 'both' = 'both',
-    depth = this.board.size
-  ) {
-    const currentIndex = this.getIndex();
-    const moves: number[] = [];
+  canMoveVertically(index: number): boolean;
+  canMoveVertically(x: number, y: number): boolean;
+  canMoveVertically(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+    if (selfCoords.x !== targetCoords.x) return false;
 
-    for (let i = 1; i < depth; i++) {
-      const targetIndex = currentIndex + i * this.board.size;
-      if (targetIndex >= this.board.length) break;
-      const targetSquare = this.board.pieceAt(targetIndex);
-      const canMove = this.canMove(targetSquare);
-      if (canMove) continue;
-      moves.push(targetIndex);
-      if (targetSquare) break;
+    const minY = Math.min(selfCoords.y, targetCoords.y);
+    const maxY = Math.max(selfCoords.y, targetCoords.y);
+    for (let y = minY + 1; y < maxY; y++) {
+      if (this.board.pieceAt(selfCoords.x, y) !== null) return false;
     }
-
-    return moves;
+    return true;
   }
 
-  getVerticalLegalMoves(
-    direction: 'next' | 'previous' | 'both' = 'both',
-    depth = this.board.size
-  ) {
-    const currentIndex = this.getIndex();
-    const movesNext: number[] = [];
-    const movesPrevious: number[] = [];
-
-    for (let i = 1; i < depth; i++) {
-      const targetIndex = currentIndex + i * this.board.size;
-      if (targetIndex >= this.board.length) break;
-      const piece = this.board.pieceAt(targetIndex);
-      if (piece && piece.isSameColor(this)) continue;
-      movesNext.push(targetIndex);
-      if (piece) break;
+  canMove(index: number): boolean;
+  canMove(x: number, y: number): boolean;
+  canMove(piece: Piece): boolean;
+  canMove(arg1: number | Piece, arg2?: number): boolean {
+    let piece: Piece | null = null;
+    if (arg1 instanceof Piece) {
+      piece = arg1;
+    } else if (arg2 !== undefined) {
+      piece = this.board.pieceAt(arg1, arg2);
+    } else {
+      piece = this.board.pieceAt(arg1);
     }
-
-    return movesNext;
+    if (!piece) return true;
+    if (this.isSameColor(piece)) return false;
+    if (piece.name === PieceName.King) return false;
+    return true;
   }
 
-  getPreviousVerticalLegalMoves(depth = this.board.size) {
-    const currentIndex = this.getIndex();
-    const moves: number[] = [];
-
-    for (let i = 1; i < depth; i++) {
-      const targetIndex = currentIndex - i * this.board.size;
-      if (targetIndex < 0) break;
-      const piece = this.board.pieceAt(targetIndex);
-      if (piece && piece.isSameColor(this)) continue;
-      moves.push(targetIndex);
-      if (piece) break;
-    }
-
-    return moves;
-  }
-
-  getLineLegalMoves(
-    directions: Direction | Array<Direction>,
-    grab: 'next' | 'previous' | 'all' = 'all',
-    depth = this.board.size
-  ) {
-    directions = Array.isArray(directions) ? directions : [directions];
-    const index = this.getIndex();
+  getLegalMoves(): number[] {
+    return this.board.squares.filter((square) => this.canMove(square));
   }
 }

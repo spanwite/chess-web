@@ -1,46 +1,46 @@
 import { isUppercase } from '@/utils/string';
-import { Pawn, Piece, PieceColor, type MaybePiece } from './Piece';
-import { Queen } from './Piece/Queen';
+import { Piece, PieceColor, Queen } from './Piece';
+import type { Position } from './Piece/Piece';
+import { Pawn } from './Piece/Pawn';
 
-type BoardFile = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h';
+export type MaybePiece = Piece | null;
 
 export class Board {
-  readonly files: Record<number, BoardFile> = [
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
-    'g',
-    'h',
-  ];
-  readonly size = 8;
-  readonly length = this.size * this.size;
   static initialFEN = '3q4/pppppppp/8/8/8/8/PPPPPPPP/4Q3';
 
-  squares: MaybePiece[] = new Array(Board.length).fill(null);
+  readonly size = {
+    x: 8,
+    y: 8,
+  };
+  pieces: Record<number, Piece> = {};
+  readonly squares = Array.from({ length: this.length }).map(
+    (_, index) => index
+  );
+
+  get length() {
+    return this.size.x * this.size.y;
+  }
+
+  getPiecesArray(): Piece[] {
+    return Object.values(this.pieces).sort((a, b) => a.id.localeCompare(b.id));
+  }
 
   constructor() {
-    this.loadFEN(Board.initialFEN);
+    this.loadFromFEN(Board.initialFEN);
   }
 
-  getRandomPiece<T extends Piece = Piece>(
-    instanceFilters: (new (...args: any[]) => T)[]
-  ): T | null {
-    const filtered = this.squares.filter((square) => {
-      for (const filter of instanceFilters) {
-        if (square instanceof filter) {
-          return true;
-        }
-      }
-      return false;
-    });
-    const randomIndex = Math.floor(Math.random() * filtered.length);
-    return filtered[randomIndex] as T;
+  coordinatesOf(index: number): Position {
+    return {
+      x: index % this.size.x,
+      y: Math.floor(index / this.size.y),
+    };
   }
 
-  loadFEN(fen: string) {
+  indexOf(x: number, y: number): number {
+    return x + y * this.size.y;
+  }
+
+  loadFromFEN(fen: string) {
     const parts = fen.split(' ');
 
     let index = 0;
@@ -50,14 +50,15 @@ export class Board {
       for (const square of squares) {
         const number = parseInt(square);
         if (!Number.isNaN(number)) {
-          for (let i = 0; i < number; i++) {
-            this.squares[index] = null;
-            index++;
-          }
+          index += number;
           continue;
         }
 
-        this.squares[index] = this.createPieceFromFEN(square);
+        const piece = this.createPieceFromFEN(square);
+        if (piece) {
+          this.placePiece(piece, index);
+        }
+
         index++;
       }
     }
@@ -65,36 +66,29 @@ export class Board {
 
   createPieceFromFEN(char: string): MaybePiece {
     const constructor = {
-      p: Pawn,
       q: Queen,
+      p: Pawn,
     }[char.toLowerCase()];
     if (!constructor) return null;
     const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;
     return new constructor(color, this);
   }
 
-  movePiece(piece: MaybePiece, toIndex: number): void {
-    if (!piece) return;
-    const fromIndex = this.indexOf(piece);
-    this.squares[toIndex] = piece;
-    this.squares[fromIndex] = null;
+  placePiece(piece: Piece, index: number): void {
+    this.pieces[index] = piece;
+    piece.index = index;
   }
 
-  indexOf(piece: MaybePiece): number {
-    return piece === null ? -1 : this.squares.indexOf(piece);
+  pieceAt(index: number): MaybePiece;
+  pieceAt(x: number, y: number): MaybePiece;
+  pieceAt(arg1: number, arg2?: number): MaybePiece {
+    const index = arg2 ? this.indexOf(arg1, arg2) : arg1;
+    return this.pieces[index] || null;
   }
 
-  rankOf(piece: Piece): number {
-    const index = this.indexOf(piece);
-    return Math.floor(index / this.size) + 1;
-  }
-
-  fileOf(piece: Piece): BoardFile {
-    const index = this.indexOf(piece);
-    return this.files[index % this.size];
-  }
-
-  pieceAt(index: number): MaybePiece {
-    return this.squares[index];
+  movePiece(piece: Piece, index: number): void {
+    const oldIndex = piece.index;
+    this.placePiece(piece, index);
+    delete this.pieces[oldIndex];
   }
 }
