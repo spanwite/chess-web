@@ -10,6 +10,12 @@ export class Queen extends Piece {
   getLegalMoves() {
     return super
       .getLegalMoves()
-      .filter((moveIndex) => super.canMoveDiagonally(moveIndex));
+      .filter(
+        (moveIndex) =>
+          super.canMoveHorizontally(moveIndex) ||
+          super.canMoveVertically(moveIndex) ||
+          super.canMoveDiagonally(moveIndex) ||
+          super.canMoveAntiDiagonally(moveIndex)
+      );
   }
 }

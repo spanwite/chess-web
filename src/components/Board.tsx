@@ -63,8 +63,8 @@ export function Board({ model: board }: { model: BoardModel }) {
 
     // Right button
     if (event.button === 2) {
-      setSelectedPiece(null);
       event.preventDefault();
+      setSelectedPiece(null);
       return;
     }
 
@@ -115,7 +115,7 @@ export function Board({ model: board }: { model: BoardModel }) {
 
   return (
     <div class='board'>
-      <div class='squares' onMouseUp={handleSquareClick}>
+      <div class='squares' onMouseDown={handleSquareClick}>
         {$squares}
       </div>
       <div class='pieces'>{$pieces}</div>

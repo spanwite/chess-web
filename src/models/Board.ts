@@ -2,11 +2,12 @@ import { isUppercase } from '@/utils/string';
 import { Piece, PieceColor, Queen } from './Piece';
 import type { Position } from './Piece/Piece';
 import { Pawn } from './Piece/Pawn';
+import { King } from './Piece/King';
 
 export type MaybePiece = Piece | null;
 
 export class Board {
-  static initialFEN = '3q4/pppppppp/8/8/8/8/PPPPPPPP/4Q3';
+  static initialFEN = '3qk3/pppppppp/8/8/8/8/PPPPPPPP/3KQ3';
 
   readonly size = {
     x: 8,
@@ -68,6 +69,7 @@ export class Board {
     const constructor = {
       q: Queen,
       p: Pawn,
+      k: King,
     }[char.toLowerCase()];
     if (!constructor) return null;
     const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;

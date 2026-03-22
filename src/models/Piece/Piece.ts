@@ -26,6 +26,22 @@ export class Piece {
     return this.color === piece.color;
   }
 
+  onSameHorizontal(index: number): boolean;
+  onSameHorizontal(x: number, y: number): boolean;
+  onSameHorizontal(arg1: number, arg2?: number): boolean {
+    const self = this.getCoordinates();
+    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+    return self.y === target.y;
+  }
+
+  onSameVertical(index: number): boolean;
+  onSameVertical(x: number, y: number): boolean;
+  onSameVertical(arg1: number, arg2?: number): boolean {
+    const self = this.getCoordinates();
+    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+    return self.x === target.x;
+  }
+
   onSameDiagonal(index: number): boolean;
   onSameDiagonal(x: number, y: number): boolean;
   onSameDiagonal(arg1: number, arg2?: number): boolean {
@@ -49,20 +65,16 @@ export class Piece {
   canMoveDiagonally(index: number): boolean;
   canMoveDiagonally(x: number, y: number): boolean;
   canMoveDiagonally(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
+    const self = this.getCoordinates();
+    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
 
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
-
-    if (!this.onSameDiagonal(targetCoords.x, targetCoords.y)) {
+    if (!this.onSameDiagonal(target.x, target.y)) {
       return false;
     }
 
-    const minY = Math.min(selfCoords.y, targetCoords.y);
-    const maxY = Math.max(selfCoords.y, targetCoords.y);
-    const minX = Math.min(selfCoords.x, targetCoords.x);
-    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    const maxY = Math.max(self.y, target.y);
+    const minX = Math.min(self.x, target.x);
+    const maxX = Math.max(self.x, target.x);
     let x = minX + 1;
     let y = maxY - 1;
 
@@ -71,6 +83,36 @@ export class Piece {
         return false;
       }
       x++;
+      y--;
+    }
+
+    return true;
+  }
+
+  canMoveAntiDiagonally(index: number): boolean;
+  canMoveAntiDiagonally(x: number, y: number): boolean;
+  canMoveAntiDiagonally(arg1: number, arg2?: number): boolean {
+    const selfCoords = this.getCoordinates();
+
+    const targetCoords = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.coordinatesOf(arg1);
+
+    if (!this.onSameAntiDiagonal(targetCoords.x, targetCoords.y)) {
+      return false;
+    }
+
+    const maxY = Math.max(selfCoords.y, targetCoords.y);
+    const minX = Math.min(selfCoords.x, targetCoords.x);
+    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    let x = maxX - 1;
+    let y = maxY - 1;
+
+    while (x > minX) {
+      if (this.board.pieceAt(x, y) !== null) {
+        return false;
+      }
+      x--;
       y--;
     }
 
@@ -94,13 +136,9 @@ export class Piece {
     return true;
   }
 
-  canMoveVertically(index: number): boolean;
-  canMoveVertically(x: number, y: number): boolean;
-  canMoveVertically(arg1: number, arg2?: number): boolean {
+  canMoveVertically(index: number): boolean {
     const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
+    const targetCoords = this.board.coordinatesOf(index);
     if (selfCoords.x !== targetCoords.x) return false;
 
     const minY = Math.min(selfCoords.y, targetCoords.y);
