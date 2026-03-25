@@ -6,6 +6,7 @@ import type { Position } from '@/models/Piece/Piece';
 
 export function Board({ model: board }: { model: BoardModel }) {
   const [selectedPiece, setSelectedPiece] = useState<Piece | null>(null);
+  const [, update] = useState({});
 
   const legalMoves: number[] = useMemo(() => {
     return selectedPiece?.getLegalMoves() || [];
@@ -78,7 +79,7 @@ export function Board({ model: board }: { model: BoardModel }) {
     }
   };
 
-  const $squares = board.squares.map((_, index) => {
+  const $squares = board.squares.map((index) => {
     const isSelected = selectedPiece?.index === index;
     const isAvailable = legalMoves.includes(index);
     const hasPiece = board.pieceAt(index) !== null;
@@ -90,6 +91,7 @@ export function Board({ model: board }: { model: BoardModel }) {
 
     return (
       <div class={classes}>
+        <div class='square-index'>{index}</div>
         {isAvailable && !hasPiece && (
           <div class='square-mark absolute-center' />
         )}
@@ -97,7 +99,7 @@ export function Board({ model: board }: { model: BoardModel }) {
     );
   });
 
-  const $pieces = board.getPiecesArray().map((piece) => {
+  const $pieces = board.getPieces().map((piece) => {
     const { x, y } = piece.getCoordinates();
     const translateX = `${x * 100}%`;
     const translateY = `${y * 100}%`;

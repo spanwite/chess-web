@@ -59,12 +59,13 @@ export class Pawn extends Piece {
     return diffY <= 1 && diffX === 1 && piece !== null;
   }
 
+  canMove(index: number): boolean {
+    return this.canMoveVertically(index) || this.canMoveDiagonally(index);
+  }
+
   getLegalMoves() {
-    return super
-      .getLegalMoves()
-      .filter(
-        (index) =>
-          this.canMoveVertically(index) || this.canMoveDiagonally(index)
-      );
+    return this.board.squares.filter(
+      (index) => this.canMove(index) && super.canMove(index)
+    );
   }
 }

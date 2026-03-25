@@ -7,11 +7,15 @@ export class King extends Piece {
     super(PieceName.King, color, board);
   }
 
+  canMove(index: number): boolean {
+    const target = this.board.coordinatesOf(index);
+    const { x, y } = this.getCoordinates();
+    return Math.abs(x - target.x) <= 1 && Math.abs(y - target.y) <= 1;
+  }
+
   getLegalMoves(): number[] {
-    return super.getLegalMoves().filter((moveIndex) => {
-      const target = this.board.coordinatesOf(moveIndex);
-      const { x, y } = this.getCoordinates();
-      return Math.abs(x - target.x) <= 1 && Math.abs(y - target.y) <= 1;
-    });
+    return this.board.squares.filter(
+      (index) => this.canMove(index) && super.canMove(index)
+    );
   }
 }

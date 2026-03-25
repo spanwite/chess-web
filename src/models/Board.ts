@@ -1,19 +1,32 @@
 import { isUppercase } from '@/utils/string';
-import { Piece, PieceColor, Queen } from './Piece';
+import {
+  Piece,
+  King,
+  Pawn,
+  PieceColor,
+  Queen,
+  Rook,
+  Bishop,
+  Knight,
+  PieceName,
+} from './Piece';
 import type { Position } from './Piece/Piece';
-import { Pawn } from './Piece/Pawn';
-import { King } from './Piece/King';
+import { list } from '@/utils/array';
 
 export type MaybePiece = Piece | null;
 
 export class Board {
-  static initialFEN = '3qk3/pppppppp/8/8/8/8/PPPPPPPP/3KQ3';
+  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBKQBNR';
+  protected kingSymbols = {
+    [PieceColor.White]: Symbol('white-king'),
+    [PieceColor.Black]: Symbol('black-king'),
+  };
 
   readonly size = {
     x: 8,
     y: 8,
   };
-  pieces: Record<number, Piece> = {};
+  pieces: Record<number | symbol, Piece> = {};
   readonly squares = Array.from({ length: this.length }).map(
     (_, index) => index
   );
@@ -22,8 +35,12 @@ export class Board {
     return this.size.x * this.size.y;
   }
 
-  getPiecesArray(): Piece[] {
+  getPieces(): Piece[] {
     return Object.values(this.pieces).sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  getKing(color: PieceColor): King {
+    return this.pieces[this.kingSymbols[color]];
   }
 
   constructor() {
@@ -59,6 +76,9 @@ export class Board {
         if (piece) {
           this.placePiece(piece, index);
         }
+        if (piece instanceof King) {
+          this.pieces[this.kingSymbols[piece.color]] = piece;
+        }
 
         index++;
       }
@@ -70,6 +90,9 @@ export class Board {
       q: Queen,
       p: Pawn,
       k: King,
+      b: Bishop,
+      r: Rook,
+      n: Knight,
     }[char.toLowerCase()];
     if (!constructor) return null;
     const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;
@@ -88,9 +111,39 @@ export class Board {
     return this.pieces[index] || null;
   }
 
-  movePiece(piece: Piece, index: number): void {
-    const oldIndex = piece.index;
+  /** Возвращает функцию для отмены выполненного хода */
+  movePiece(piece: Piece, index: number): () => void {
+    const replacedPiece = this.pieces[index];
+    const fromIndex = piece.index;
+
     this.placePiece(piece, index);
-    delete this.pieces[oldIndex];
+    delete this.pieces[fromIndex];
+
+    return () => {
+      if (replacedPiece) {
+        this.placePiece(replacedPiece, index);
+      } else {
+        delete this.pieces[index];
+      }
+      this.placePiece(piece, fromIndex);
+    };
+  }
+
+  findPieces(where: {
+    color?: PieceColor;
+    name?: PieceName | PieceName[];
+  }): Piece[] {
+    const { color, name } = where;
+    const names = name ? list(name) : [];
+
+    return Object.values(this.pieces).filter((piece) => {
+      if (color && color !== piece.color) {
+        return false;
+      }
+      if (names.length > 0 && !names.includes(piece.name)) {
+        return false;
+      }
+      return true;
+    });
   }
 }

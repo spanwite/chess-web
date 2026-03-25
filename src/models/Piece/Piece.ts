@@ -18,6 +18,12 @@ export class Piece {
     return this.color === PieceColor.White;
   }
 
+  get enemyColor() {
+    return this.color === PieceColor.White
+      ? PieceColor.Black
+      : PieceColor.White;
+  }
+
   getCoordinates() {
     return this.board.coordinatesOf(this.index);
   }
@@ -149,21 +155,24 @@ export class Piece {
     return true;
   }
 
-  canMove(index: number): boolean;
-  canMove(x: number, y: number): boolean;
-  canMove(piece: Piece): boolean;
-  canMove(arg1: number | Piece, arg2?: number): boolean {
-    let piece: Piece | null = null;
-    if (arg1 instanceof Piece) {
-      piece = arg1;
-    } else if (arg2 !== undefined) {
-      piece = this.board.pieceAt(arg1, arg2);
-    } else {
-      piece = this.board.pieceAt(arg1);
+  canMove(index: number): boolean {
+    const piece = this.board.pieceAt(index);
+    if (piece && this.isSameColor(piece)) return false;
+
+    const king = this.board.getKing(this.color);
+    const undo = this.board.movePiece(this, index);
+    const enemyPieces = this.board.findPieces({
+      color: this.enemyColor,
+    });
+    for (const enemyPiece of enemyPieces) {
+      const canMove = enemyPiece.canMove(king.index);
+      if (canMove) {
+        undo();
+        return false;
+      }
     }
-    if (!piece) return true;
-    if (this.isSameColor(piece)) return false;
-    if (piece.name === PieceName.King) return false;
+    undo();
+
     return true;
   }
 

@@ -2,18 +2,13 @@ import type { Board } from '../Board';
 import { Piece } from './Piece';
 import { PieceName, type PieceColor } from './types';
 
-export class Queen extends Piece {
+export class Bishop extends Piece {
   constructor(color: PieceColor, board: Board) {
-    super(PieceName.Queen, color, board);
+    super(PieceName.Bishop, color, board);
   }
 
   canMove(index: number): boolean {
-    return (
-      super.canMoveDiagonally(index) ||
-      super.canMoveAntiDiagonally(index) ||
-      super.canMoveHorizontally(index) ||
-      super.canMoveVertically(index)
-    );
+    return super.canMoveDiagonally(index) || super.canMoveAntiDiagonally(index);
   }
 
   getLegalMoves() {
