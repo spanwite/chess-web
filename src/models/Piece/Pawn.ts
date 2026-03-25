@@ -29,7 +29,7 @@ export class Pawn extends Piece {
 
     const startY = this.isWhite ? 6 : 1;
     if (diffY === 2 && startY === self.y) {
-      return super.canMoveVertically(index);
+      return piece === null && super.canMoveVertically(index);
     }
 
     return false;
