@@ -16,11 +16,12 @@ import { list } from '@/utils/array';
 export type MaybePiece = Piece | null;
 
 export class Board {
-  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBKQBNR';
+  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
   protected kingSymbols = {
     [PieceColor.White]: Symbol('white-king'),
     [PieceColor.Black]: Symbol('black-king'),
   };
+  public turn: PieceColor = PieceColor.White;
 
   readonly size = {
     x: 8,
@@ -111,8 +112,15 @@ export class Board {
     return this.pieces[index] || null;
   }
 
+  movePiece(piece: Piece, index: number): void {
+    const fromIndex = piece.index;
+    this.placePiece(piece, index);
+    delete this.pieces[fromIndex];
+    this.switchTurn();
+  }
+
   /** Возвращает функцию для отмены выполненного хода */
-  movePiece(piece: Piece, index: number): () => void {
+  movePieceTemporary(piece: Piece, index: number): () => void {
     const replacedPiece = this.pieces[index];
     const fromIndex = piece.index;
 
@@ -145,5 +153,10 @@ export class Board {
       }
       return true;
     });
+  }
+
+  switchTurn() {
+    this.turn =
+      this.turn === PieceColor.White ? PieceColor.Black : PieceColor.White;
   }
 }

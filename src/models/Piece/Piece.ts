@@ -160,7 +160,7 @@ export class Piece {
     if (piece && this.isSameColor(piece)) return false;
 
     const king = this.board.getKing(this.color);
-    const undo = this.board.movePiece(this, index);
+    const undo = this.board.movePieceTemporary(this, index);
     const enemyPieces = this.board.findPieces({
       color: this.enemyColor,
     });

@@ -12,18 +12,6 @@ export function Board({ model: board }: { model: BoardModel }) {
     return selectedPiece?.getLegalMoves() || [];
   }, [selectedPiece]);
 
-  // const handleSquareClick = (index: number) => {
-  //   const piece = board.pieceAt(index);
-  //   if (legalMoves.includes(index)) {
-  //     board.movePiece(selectedPiece, index);
-  //     setSelectedPiece(null);
-  //   } else if (piece === selectedPiece) {
-  //     setSelectedPiece(null);
-  //   } else {
-  //     setSelectedPiece(piece);
-  //   }
-  // };
-
   // const squaress = board.squares.map((square, index) => {
   //   const isAvailable = legalMoves.includes(index);
   //   const isSelected = board.indexOf(selectedPiece) === index;
@@ -69,13 +57,13 @@ export function Board({ model: board }: { model: BoardModel }) {
       return;
     }
 
-    if (piece === selectedPiece) {
+    if (piece && piece.color === board.turn) {
+      setSelectedPiece(piece === selectedPiece ? null : piece);
+    } else if (selectedPiece) {
+      if (legalMoves.includes(index)) {
+        board.movePiece(selectedPiece, index);
+      }
       setSelectedPiece(null);
-    } else if (selectedPiece && legalMoves.includes(index)) {
-      board.movePiece(selectedPiece, index);
-      setSelectedPiece(null);
-    } else {
-      setSelectedPiece(piece);
     }
   };
 
