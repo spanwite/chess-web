@@ -48,7 +48,7 @@ export function Board({ model: board }: { model: BoardModel }) {
     const squareY = Math.round((top - y) / width);
 
     const index = board.indexOf(squareX, squareY);
-    const piece = board.pieceAt(index);
+    const piece = board.getPieceAt(index);
 
     // Right button
     if (event.button === 2) {
@@ -61,7 +61,8 @@ export function Board({ model: board }: { model: BoardModel }) {
       setSelectedPiece(piece === selectedPiece ? null : piece);
     } else if (selectedPiece) {
       if (legalMoves.includes(index)) {
-        board.movePiece(selectedPiece, index);
+        selectedPiece.move(index);
+        board.switchTurn();
       }
       setSelectedPiece(null);
     }
@@ -70,7 +71,7 @@ export function Board({ model: board }: { model: BoardModel }) {
   const $squares = board.squares.map((index) => {
     const isSelected = selectedPiece?.index === index;
     const isAvailable = legalMoves.includes(index);
-    const hasPiece = board.pieceAt(index) !== null;
+    const hasPiece = board.getPieceAt(index) !== null;
 
     const classes = cn('square', {
       'is-selected': isSelected,

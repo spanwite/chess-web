@@ -1,18 +1,46 @@
 import { PieceName, PieceColor } from './types';
-import type { Board } from '../Board';
+import type { Board, BoardMove } from '../Board';
 import { generateId } from '@/utils/string';
 
 export type Position = { x: number; y: number };
 
-export class Piece {
+export abstract class Piece {
+  /**
+   * Уникальный идентификатор фигуры
+   * @remarks Необходим для корректной отрисовки в React
+   */
   public readonly id = generateId();
+
+  /** Индекс клетки, на которой расположена фигура в данный момент */
   public index = -1;
 
+  /** Имя фигуры */
+  public readonly name: PieceName;
+
+  /** Цвет фигуры */
+  public readonly color: PieceColor;
+
+  /** Доска, на которой располагается фигура */
+  protected readonly board: Board;
+
+  /**
+   * Буквенное наименование фигуры
+   * @remarks Используется в алгебраической нотации
+   */
+  public readonly letter: string;
+
   constructor(
-    public readonly name: PieceName,
-    public readonly color: PieceColor,
-    protected readonly board: Board
-  ) {}
+    name: PieceName,
+    color: PieceColor,
+    board: Board,
+    letter = name[0]
+  ) {
+    this.name = name;
+    this.color = color;
+    this.board = board;
+    this.letter =
+      color === PieceColor.White ? letter.toUpperCase() : letter.toLowerCase();
+  }
 
   get isWhite() {
     return this.color === PieceColor.White;
@@ -85,7 +113,7 @@ export class Piece {
     let y = maxY - 1;
 
     while (x < maxX) {
-      if (this.board.pieceAt(x, y) !== null) {
+      if (this.board.getPieceAt(x, y) !== null) {
         return false;
       }
       x++;
@@ -115,7 +143,7 @@ export class Piece {
     let y = maxY - 1;
 
     while (x > minX) {
-      if (this.board.pieceAt(x, y) !== null) {
+      if (this.board.getPieceAt(x, y) !== null) {
         return false;
       }
       x--;
@@ -137,7 +165,7 @@ export class Piece {
     const minX = Math.min(selfCoords.x, targetCoords.x);
     const maxX = Math.max(selfCoords.x, targetCoords.x);
     for (let x = minX + 1; x < maxX; x++) {
-      if (this.board.pieceAt(x, selfCoords.y) !== null) return false;
+      if (this.board.getPieceAt(x, selfCoords.y) !== null) return false;
     }
     return true;
   }
@@ -150,33 +178,71 @@ export class Piece {
     const minY = Math.min(selfCoords.y, targetCoords.y);
     const maxY = Math.max(selfCoords.y, targetCoords.y);
     for (let y = minY + 1; y < maxY; y++) {
-      if (this.board.pieceAt(selfCoords.x, y) !== null) return false;
+      if (this.board.getPieceAt(selfCoords.x, y) !== null) return false;
     }
     return true;
+  }
+
+  isAttacked(): boolean {
+    return this.board.isSquareAttackedBy(this.index, this.enemyColor);
   }
 
   canMove(index: number): boolean {
-    const piece = this.board.pieceAt(index);
+    const piece = this.board.getPieceAt(index);
     if (piece && this.isSameColor(piece)) return false;
 
     const king = this.board.getKing(this.color);
-    const undo = this.board.movePieceTemporary(this, index);
-    const enemyPieces = this.board.findPieces({
-      color: this.enemyColor,
-    });
-    for (const enemyPiece of enemyPieces) {
-      const canMove = enemyPiece.canMove(king.index);
-      if (canMove) {
-        undo();
-        return false;
+    this.board.movePiece(this, index);
+    const isAttacked = king.isAttacked();
+    this.board.undoLastMove();
+
+    return !isAttacked;
+  }
+
+  /**
+   * Возвращает алгебраическую нотацию хода фигуры на клетку.
+   * @param index - Индекс клетки назначения
+   */
+  getMoveNotation(index: number): string {
+    const captureMark = this.board.getPieceAt(index) !== null ? 'x' : '';
+
+    const piecesCanMoveSimilarly = this.board
+      .findPieces({
+        color: this.color,
+        name: this.name,
+      })
+      .filter((piece) => piece !== this && piece.canMove(index));
+    const needPrefix =
+      piecesCanMoveSimilarly.length > 0 || (captureMark && !this.letter);
+    const prefix = needPrefix ? this.board.getFileOf(this.index) : '';
+
+    const targetPosition = `${this.board.getFileOf(index)}${this.board.getRankOf(index)}`;
+
+    return `${prefix}${this.letter}${captureMark}${targetPosition}`;
+  }
+
+  /**
+   * Перемещает фигуру на клетку.
+   * @param index - Индекс клетки назначения.
+   */
+  move(index: number): void {
+    const notation = this.getMoveNotation(index);
+    const move = this.board.movePiece(this, index);
+    this.board.moves.push({ notation, moves: [move] });
+  }
+
+  /**
+   * Проверяет, ходила ли фигура.
+   * @remarks Перебирает массив истории ходов и ищет в нем текущую фигуру.
+   */
+  hasMoved(): boolean {
+    for (const { moves: movedPieces } of this.board.moves) {
+      for (const pieceMove of movedPieces) {
+        if (pieceMove.piece === this) return true;
       }
     }
-    undo();
-
-    return true;
+    return false;
   }
 
-  getLegalMoves(): number[] {
-    return this.board.squares.filter((square) => this.canMove(square));
-  }
+  abstract getLegalMoves(): number[];
 }

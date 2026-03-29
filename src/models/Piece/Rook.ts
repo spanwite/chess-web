@@ -12,8 +12,8 @@ export class Rook extends Piece {
   }
 
   getLegalMoves() {
-    return super
-      .getLegalMoves()
-      .filter((index) => this.canMove(index) && super.canMove(index));
+    return this.board.squares.filter(
+      (index) => this.canMove(index) && super.canMove(index)
+    );
   }
 }

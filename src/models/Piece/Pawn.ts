@@ -4,7 +4,7 @@ import { PieceColor, PieceName } from './types';
 
 export class Pawn extends Piece {
   constructor(color: PieceColor, board: Board) {
-    super(PieceName.Pawn, color, board);
+    super(PieceName.Pawn, color, board, '');
   }
 
   canMoveVertically(index: number): boolean {
@@ -12,7 +12,7 @@ export class Pawn extends Piece {
       return false;
     }
     const target = this.board.coordinatesOf(index);
-    const piece = this.board.pieceAt(index);
+    const piece = this.board.getPieceAt(index);
     const self = this.getCoordinates();
 
     if (this.isWhite) {
@@ -41,7 +41,7 @@ export class Pawn extends Piece {
     const self = this.getCoordinates();
     const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
     const index = this.board.indexOf(target.x, target.y);
-    const piece = this.board.pieceAt(index);
+    const piece = this.board.getPieceAt(index);
 
     if (!super.onSameDiagonal(index) && !this.onSameAntiDiagonal(index)) {
       return false;

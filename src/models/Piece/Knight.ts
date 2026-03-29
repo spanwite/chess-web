@@ -4,7 +4,7 @@ import { PieceName, type PieceColor } from './types';
 
 export class Knight extends Piece {
   constructor(color: PieceColor, board: Board) {
-    super(PieceName.Knight, color, board);
+    super(PieceName.Knight, color, board, 'n');
   }
 
   canMove(index: number) {

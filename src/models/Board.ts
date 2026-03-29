@@ -12,16 +12,43 @@ import {
 } from './Piece';
 import type { Position } from './Piece/Piece';
 import { list } from '@/utils/array';
+import { noop } from '@/utils/function';
 
 export type MaybePiece = Piece | null;
 
+export interface PieceMove {
+  /** Фигура, совершающая перемещение */
+  piece: Piece;
+  /** Фигура, съеденная перемещающейся фигурой */
+  eatenPiece: Piece | null;
+  /** Индекс клетки, с которой фигура начинает перемещение */
+  fromIndex: number;
+  /** Индекс клетки, на которую фигура перемещается */
+  toIndex: number;
+}
+
+export interface BoardMove {
+  /** Алгебраическая нотация хода */
+  notation: string;
+  /**
+   * Фигуры, которые выполнили перемещение
+   * @remarks
+   * Массив тут необходим для обработки рокировки короля.
+   * Рокировка подразумевает движение сразу двух фигур.
+   */
+  moves: PieceMove[];
+}
+
 export class Board {
-  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w';
+  public readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
   protected kingSymbols = {
     [PieceColor.White]: Symbol('white-king'),
     [PieceColor.Black]: Symbol('black-king'),
   };
   public turn: PieceColor = PieceColor.White;
+  public moves: BoardMove[] = [];
+  public undoLastMove = noop;
 
   readonly size = {
     x: 8,
@@ -32,6 +59,12 @@ export class Board {
     (_, index) => index
   );
 
+  constructor() {
+    // this.loadFromFEN(Board.initialFEN);
+    // this.loadFromFEN('rnbqkbnr/p7/1ppppp1p/6p1/8/2NPPQP1/PPPBNPBP/R3K2R');
+    this.loadFromFEN('4k3/1qq5/8/8/8/8/8/R3K2R b');
+  }
+
   get length() {
     return this.size.x * this.size.y;
   }
@@ -41,11 +74,7 @@ export class Board {
   }
 
   getKing(color: PieceColor): King {
-    return this.pieces[this.kingSymbols[color]];
-  }
-
-  constructor() {
-    this.loadFromFEN(Board.initialFEN);
+    return this.pieces[this.kingSymbols[color]] as King;
   }
 
   coordinatesOf(index: number): Position {
@@ -59,12 +88,37 @@ export class Board {
     return x + y * this.size.y;
   }
 
-  loadFromFEN(fen: string) {
-    const parts = fen.split(' ');
+  /**
+   * @returns Координата клетки по оси X.
+   * @remarks Отсчет начинается с нуля.
+   */
+  getXOf(index: number): number {
+    return index % this.size.x;
+  }
+
+  /**
+   * @returns Координата клетки по оси Y.
+   * @remarks Отсчет начинается с нуля.
+   */
+  getYOf(index: number): number {
+    return Math.floor(index / this.size.y);
+  }
+
+  getFileOf(index: number): (typeof this.files)[number] {
+    return this.files[this.getXOf(index)];
+  }
+
+  getRankOf(index: number): number {
+    return this.size.x - this.getYOf(index);
+  }
+
+  loadFromFEN(fen: string): void {
+    const [rows, turn] = fen.split(' ');
+
+    this.turn = this.getColorFromFEN(turn);
 
     let index = 0;
-    const rows = parts[0].split('/');
-    for (const row of rows) {
+    for (const row of rows.split('/')) {
       const squares = row.split('');
       for (const square of squares) {
         const number = parseInt(square);
@@ -75,7 +129,7 @@ export class Board {
 
         const piece = this.createPieceFromFEN(square);
         if (piece) {
-          this.placePiece(piece, index);
+          this.setPieceAt(index, piece);
         }
         if (piece instanceof King) {
           this.pieces[this.kingSymbols[piece.color]] = piece;
@@ -84,6 +138,10 @@ export class Board {
         index++;
       }
     }
+  }
+
+  getColorFromFEN(char: string): PieceColor {
+    return char === 'w' ? PieceColor.White : PieceColor.Black;
   }
 
   createPieceFromFEN(char: string): MaybePiece {
@@ -100,42 +158,62 @@ export class Board {
     return new constructor(color, this);
   }
 
-  placePiece(piece: Piece, index: number): void {
-    this.pieces[index] = piece;
-    piece.index = index;
-  }
-
-  pieceAt(index: number): MaybePiece;
-  pieceAt(x: number, y: number): MaybePiece;
-  pieceAt(arg1: number, arg2?: number): MaybePiece {
+  getPieceAt(index: number): MaybePiece;
+  getPieceAt(x: number, y: number): MaybePiece;
+  getPieceAt(arg1: number, arg2?: number): MaybePiece {
     const index = arg2 ? this.indexOf(arg1, arg2) : arg1;
     return this.pieces[index] || null;
   }
 
-  movePiece(piece: Piece, index: number): void {
-    const fromIndex = piece.index;
-    this.placePiece(piece, index);
-    delete this.pieces[fromIndex];
-    this.switchTurn();
+  setPieceAt(index: number, piece: Piece): void {
+    this.pieces[index] = piece;
+    piece.index = index;
   }
 
-  /** Возвращает функцию для отмены выполненного хода */
-  movePieceTemporary(piece: Piece, index: number): () => void {
-    const replacedPiece = this.pieces[index];
+  /**
+   * Перемещает фигуру с текущей позиции на переданную клетку
+   * @param piece - Фигура, которая выполнит перемещение
+   * @param index - Индекс клетки, на которую переместится фигура
+   * @returns Функция для отмены выполненного перемещения
+   */
+  movePiece(piece: Piece, index: number): PieceMove {
+    const eatenPiece = this.pieces[index];
     const fromIndex = piece.index;
 
-    this.placePiece(piece, index);
+    this.setPieceAt(index, piece);
     delete this.pieces[fromIndex];
 
-    return () => {
-      if (replacedPiece) {
-        this.placePiece(replacedPiece, index);
+    this.undoLastMove = () => {
+      if (eatenPiece) {
+        this.setPieceAt(index, eatenPiece);
       } else {
         delete this.pieces[index];
       }
-      this.placePiece(piece, fromIndex);
+      this.setPieceAt(fromIndex, piece);
+      this.undoLastMove = noop;
+    };
+
+    return {
+      piece,
+      eatenPiece,
+      fromIndex,
+      toIndex: index,
     };
   }
+
+  // undoMoves(count = 1) {
+  //   while (count > 0) {
+  //     const move = this.turns.pop();
+  //     if (!move) break;
+  //     if (move.eatenPiece) {
+  //       this.setPieceAt(move.toIndex, move.eatenPiece);
+  //     } else {
+  //       delete this.pieces[move.toIndex];
+  //     }
+  //     this.setPieceAt(move.fromIndex, move.piece);
+  //     count--;
+  //   }
+  // }
 
   findPieces(where: {
     color?: PieceColor;
@@ -158,5 +236,18 @@ export class Board {
   switchTurn() {
     this.turn =
       this.turn === PieceColor.White ? PieceColor.Black : PieceColor.White;
+  }
+
+  isSquareAttackedBy(index: number, color: PieceColor) {
+    const enemyPieces = this.findPieces({
+      color,
+    });
+    for (const enemyPiece of enemyPieces) {
+      const canMove = enemyPiece.canMove(index);
+      if (canMove) {
+        return true;
+      }
+    }
+    return false;
   }
 }
