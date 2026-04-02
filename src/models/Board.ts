@@ -39,9 +39,16 @@ export interface BoardMove {
   moves: PieceMove[];
 }
 
+const FENCollection = {
+  basic: 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w',
+  castling: '4k3/1qq5/8/8/8/8/8/R3K2R w',
+};
+
 export class Board {
-  static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w';
+  readonly size = 8;
   readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
+  readonly ranks = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
   protected kingSymbols = {
     [PieceColor.White]: Symbol('white-king'),
     [PieceColor.Black]: Symbol('black-king'),
@@ -50,16 +57,13 @@ export class Board {
   moves: BoardMove[] = [];
   undoLastMove = noop;
 
-  readonly size = 8;
   pieces: Record<number | symbol, Piece> = {};
   readonly squares = Array.from({ length: this.length }).map(
     (_, index) => index
   );
 
   constructor() {
-    // this.loadFromFEN(Board.initialFEN);
-    // this.loadFromFEN('rnbqkbnr/p7/1ppppp1p/6p1/8/2NPPQP1/PPPBNPBP/R3K2R');
-    this.loadFEN('4k3/1qq5/8/8/8/8/8/R3K2R b');
+    this.loadFEN(FENCollection.basic);
   }
 
   get length() {
