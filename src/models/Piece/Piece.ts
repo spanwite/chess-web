@@ -53,7 +53,7 @@ export abstract class Piece {
   }
 
   getCoordinates() {
-    return this.board.coordinatesOf(this.index);
+    return this.board.getCoordinatesOf(this.index);
   }
 
   isSameColor(piece: Piece) {
@@ -64,7 +64,9 @@ export abstract class Piece {
   onSameHorizontal(x: number, y: number): boolean;
   onSameHorizontal(arg1: number, arg2?: number): boolean {
     const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+    const target = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.getCoordinatesOf(arg1);
     return self.y === target.y;
   }
 
@@ -72,7 +74,9 @@ export abstract class Piece {
   onSameVertical(x: number, y: number): boolean;
   onSameVertical(arg1: number, arg2?: number): boolean {
     const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+    const target = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.getCoordinatesOf(arg1);
     return self.x === target.x;
   }
 
@@ -82,7 +86,7 @@ export abstract class Piece {
     const selfCoords = this.getCoordinates();
     const targetCoords = arg2
       ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
+      : this.board.getCoordinatesOf(arg1);
     return selfCoords.y + selfCoords.x === targetCoords.y + targetCoords.x;
   }
 
@@ -92,7 +96,7 @@ export abstract class Piece {
     const selfCoords = this.getCoordinates();
     const targetCoords = arg2
       ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
+      : this.board.getCoordinatesOf(arg1);
     return selfCoords.y - selfCoords.x === targetCoords.y - targetCoords.x;
   }
 
@@ -100,7 +104,9 @@ export abstract class Piece {
   canMoveDiagonally(x: number, y: number): boolean;
   canMoveDiagonally(arg1: number, arg2?: number): boolean {
     const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+    const target = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.getCoordinatesOf(arg1);
 
     if (!this.onSameDiagonal(target.x, target.y)) {
       return false;
@@ -130,7 +136,7 @@ export abstract class Piece {
 
     const targetCoords = arg2
       ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
+      : this.board.getCoordinatesOf(arg1);
 
     if (!this.onSameAntiDiagonal(targetCoords.x, targetCoords.y)) {
       return false;
@@ -159,7 +165,7 @@ export abstract class Piece {
     const selfCoords = this.getCoordinates();
     const targetCoords = arg2
       ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
+      : this.board.getCoordinatesOf(arg1);
     if (selfCoords.y !== targetCoords.y) return false;
 
     const minX = Math.min(selfCoords.x, targetCoords.x);
@@ -172,7 +178,7 @@ export abstract class Piece {
 
   canMoveVertically(index: number): boolean {
     const selfCoords = this.getCoordinates();
-    const targetCoords = this.board.coordinatesOf(index);
+    const targetCoords = this.board.getCoordinatesOf(index);
     if (selfCoords.x !== targetCoords.x) return false;
 
     const minY = Math.min(selfCoords.y, targetCoords.y);

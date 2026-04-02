@@ -62,7 +62,7 @@ export class Board {
   constructor() {
     // this.loadFromFEN(Board.initialFEN);
     // this.loadFromFEN('rnbqkbnr/p7/1ppppp1p/6p1/8/2NPPQP1/PPPBNPBP/R3K2R');
-    this.loadFromFEN('4k3/1qq5/8/8/8/8/8/R3K2R b');
+    this.loadFEN('4k3/1qq5/8/8/8/8/8/R3K2R b');
   }
 
   get length() {
@@ -77,14 +77,7 @@ export class Board {
     return this.pieces[this.kingSymbols[color]] as King;
   }
 
-  coordinatesOf(index: number): Position {
-    return {
-      x: index % this.size.x,
-      y: Math.floor(index / this.size.y),
-    };
-  }
-
-  indexOf(x: number, y: number): number {
+  getIndexOf(x: number, y: number): number {
     return x + y * this.size.y;
   }
 
@@ -104,6 +97,13 @@ export class Board {
     return Math.floor(index / this.size.y);
   }
 
+  getCoordinatesOf(index: number): Position {
+    return {
+      x: this.getXOf(index),
+      y: this.getYOf(index),
+    };
+  }
+
   getFileOf(index: number): (typeof this.files)[number] {
     return this.files[this.getXOf(index)];
   }
@@ -112,7 +112,7 @@ export class Board {
     return this.size.x - this.getYOf(index);
   }
 
-  loadFromFEN(fen: string): void {
+  loadFEN(fen: string): void {
     const [rows, turn] = fen.split(' ');
 
     this.turn = this.getColorFromFEN(turn);
@@ -161,7 +161,7 @@ export class Board {
   getPieceAt(index: number): MaybePiece;
   getPieceAt(x: number, y: number): MaybePiece;
   getPieceAt(arg1: number, arg2?: number): MaybePiece {
-    const index = arg2 ? this.indexOf(arg1, arg2) : arg1;
+    const index = arg2 ? this.getIndexOf(arg1, arg2) : arg1;
     return this.pieces[index] || null;
   }
 

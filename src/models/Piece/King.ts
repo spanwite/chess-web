@@ -19,7 +19,7 @@ export class King extends Piece {
    */
   protected isCastlingSquare(index: number): boolean {
     const { x, y } = this.getCoordinates();
-    const target = this.board.coordinatesOf(index);
+    const target = this.board.getCoordinatesOf(index);
     const diffX = Math.abs(x - target.x);
     const diffY = Math.abs(y - target.y);
     if (diffY === 0 && diffX === 2) {
@@ -77,7 +77,7 @@ export class King extends Piece {
   }
 
   canMove(index: number): boolean {
-    const target = this.board.coordinatesOf(index);
+    const target = this.board.getCoordinatesOf(index);
     const { x, y } = this.getCoordinates();
     return Math.abs(x - target.x) <= 1 && Math.abs(y - target.y) <= 1;
   }

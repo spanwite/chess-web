@@ -11,7 +11,7 @@ export class Pawn extends Piece {
     if (!this.onSameVertical(index)) {
       return false;
     }
-    const target = this.board.coordinatesOf(index);
+    const target = this.board.getCoordinatesOf(index);
     const piece = this.board.getPieceAt(index);
     const self = this.getCoordinates();
 
@@ -39,8 +39,10 @@ export class Pawn extends Piece {
   canMoveDiagonally(x: number, y: number): boolean;
   canMoveDiagonally(arg1: number, arg2?: number): boolean {
     const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
-    const index = this.board.indexOf(target.x, target.y);
+    const target = arg2
+      ? { x: arg1, y: arg2 }
+      : this.board.getCoordinatesOf(arg1);
+    const index = this.board.getIndexOf(target.x, target.y);
     const piece = this.board.getPieceAt(index);
 
     if (!super.onSameDiagonal(index) && !this.onSameAntiDiagonal(index)) {

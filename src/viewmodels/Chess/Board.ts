@@ -61,7 +61,7 @@ export class BoardViewModel extends ViewModel<ChessState> {
     const squareX = Math.round((left - x) / width);
     const squareY = Math.round((top - y) / width);
 
-    const index = board.indexOf(squareX, squareY);
+    const index = board.getIndexOf(squareX, squareY);
 
     this.selectSquare(index);
   };

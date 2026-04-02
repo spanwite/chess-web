@@ -8,8 +8,8 @@ export class Knight extends Piece {
   }
 
   canMove(index: number) {
-    const self = this.board.coordinatesOf(this.index);
-    const target = this.board.coordinatesOf(index);
+    const self = this.board.getCoordinatesOf(this.index);
+    const target = this.board.getCoordinatesOf(index);
 
     const diffY = Math.abs(target.y - self.y);
     const diffX = Math.abs(target.x - self.x);
