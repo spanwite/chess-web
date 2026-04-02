@@ -50,10 +50,7 @@ export class Board {
   public moves: BoardMove[] = [];
   public undoLastMove = noop;
 
-  readonly size = {
-    x: 8,
-    y: 8,
-  };
+  readonly size = 8;
   pieces: Record<number | symbol, Piece> = {};
   readonly squares = Array.from({ length: this.length }).map(
     (_, index) => index
@@ -66,7 +63,7 @@ export class Board {
   }
 
   get length() {
-    return this.size.x * this.size.y;
+    return this.size * this.size;
   }
 
   getPieces(): Piece[] {
@@ -78,7 +75,7 @@ export class Board {
   }
 
   getIndexOf(x: number, y: number): number {
-    return x + y * this.size.y;
+    return x + y * this.size;
   }
 
   /**
@@ -86,7 +83,7 @@ export class Board {
    * @remarks Отсчет начинается с нуля.
    */
   getXOf(index: number): number {
-    return index % this.size.x;
+    return index % this.size;
   }
 
   /**
@@ -94,7 +91,7 @@ export class Board {
    * @remarks Отсчет начинается с нуля.
    */
   getYOf(index: number): number {
-    return Math.floor(index / this.size.y);
+    return Math.floor(index / this.size);
   }
 
   getCoordinatesOf(index: number): Position {
@@ -109,7 +106,7 @@ export class Board {
   }
 
   getRankOf(index: number): number {
-    return this.size.x - this.getYOf(index);
+    return this.size - this.getYOf(index);
   }
 
   loadFEN(fen: string): void {

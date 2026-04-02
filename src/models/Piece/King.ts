@@ -40,7 +40,7 @@ export class King extends Piece {
     const coordinates = this.getCoordinates();
 
     let x = coordinates.x;
-    while (x >= 0 && x < this.board.size.x) {
+    while (x >= 0 && x < this.board.size) {
       x += direction;
       const piece = this.board.getPieceAt(x, coordinates.y);
       if (piece && piece.name === PieceName.Rook) {
