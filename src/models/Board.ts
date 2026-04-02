@@ -14,7 +14,7 @@ import type { Position } from './Piece/Piece';
 import { list } from '@/utils/array';
 import { noop } from '@/utils/function';
 
-export type MaybePiece = Piece | null;
+export type Square = Piece | null;
 
 export interface PieceMove {
   /** Фигура, совершающая перемещение */
@@ -46,36 +46,17 @@ const FENCollection = {
 
 export class Board {
   readonly size = 8;
+  readonly length = this.size * this.size;
   readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
   readonly ranks = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-  protected kingSymbols = {
-    [PieceColor.White]: Symbol('white-king'),
-    [PieceColor.Black]: Symbol('black-king'),
-  };
-  turn: PieceColor = PieceColor.White;
   moves: BoardMove[] = [];
   undoLastMove = noop;
 
-  pieces: Record<number | symbol, Piece> = {};
-  readonly squares = Array.from({ length: this.length }).map(
-    (_, index) => index
-  );
+  squares: Square[] = Array(this.length).fill(null);
 
   constructor() {
     this.loadFEN(FENCollection.basic);
-  }
-
-  get length() {
-    return this.size * this.size;
-  }
-
-  getPieces(): Piece[] {
-    return Object.values(this.pieces).sort((a, b) => a.id.localeCompare(b.id));
-  }
-
-  getKing(color: PieceColor): King {
-    return this.pieces[this.kingSymbols[color]] as King;
   }
 
   getIndexOf(x: number, y: number): number {
@@ -116,8 +97,6 @@ export class Board {
   loadFEN(fen: string): void {
     const [rows, turn] = fen.split(' ');
 
-    this.turn = this.getColorFromFEN(turn);
-
     let index = 0;
     for (const row of rows.split('/')) {
       const squares = row.split('');
@@ -132,9 +111,6 @@ export class Board {
         if (piece) {
           this.setPieceAt(index, piece);
         }
-        if (piece instanceof King) {
-          this.pieces[this.kingSymbols[piece.color]] = piece;
-        }
 
         index++;
       }
@@ -145,7 +121,7 @@ export class Board {
     return char === 'w' ? PieceColor.White : PieceColor.Black;
   }
 
-  createPieceFromFEN(char: string): MaybePiece {
+  createPieceFromFEN(char: string): Piece | null {
     const constructor = {
       q: Queen,
       p: Pawn,
@@ -159,15 +135,15 @@ export class Board {
     return new constructor(color, this);
   }
 
-  getPieceAt(index: number): MaybePiece;
-  getPieceAt(x: number, y: number): MaybePiece;
-  getPieceAt(arg1: number, arg2?: number): MaybePiece {
+  getPieceAt(index: number): Square;
+  getPieceAt(x: number, y: number): Square;
+  getPieceAt(arg1: number, arg2?: number): Square {
     const index = arg2 ? this.getIndexOf(arg1, arg2) : arg1;
-    return this.pieces[index] || null;
+    return this.squares[index] || null;
   }
 
   setPieceAt(index: number, piece: Piece): void {
-    this.pieces[index] = piece;
+    this.squares[index] = piece;
     piece.index = index;
   }
 
@@ -178,17 +154,17 @@ export class Board {
    * @returns Функция для отмены выполненного перемещения
    */
   movePiece(piece: Piece, index: number): PieceMove {
-    const eatenPiece = this.pieces[index];
+    const eatenPiece = this.squares[index];
     const fromIndex = piece.index;
 
     this.setPieceAt(index, piece);
-    delete this.pieces[fromIndex];
+    this.squares[fromIndex] = null;
 
     this.undoLastMove = () => {
       if (eatenPiece) {
         this.setPieceAt(index, eatenPiece);
       } else {
-        delete this.pieces[index];
+        this.squares[index] = null;
       }
       this.setPieceAt(fromIndex, piece);
       this.undoLastMove = noop;
@@ -222,21 +198,22 @@ export class Board {
   }): Piece[] {
     const { color, name } = where;
     const names = name ? list(name) : [];
+    const pieces: Piece[] = [];
 
-    return Object.values(this.pieces).filter((piece) => {
+    for (const piece of this.squares) {
+      if (piece === null) {
+        continue;
+      }
       if (color && color !== piece.color) {
-        return false;
+        continue;
       }
       if (names.length > 0 && !names.includes(piece.name)) {
-        return false;
+        continue;
       }
-      return true;
-    });
-  }
+      pieces.push(piece);
+    }
 
-  switchTurn() {
-    this.turn =
-      this.turn === PieceColor.White ? PieceColor.Black : PieceColor.White;
+    return pieces;
   }
 
   isSquareAttackedBy(index: number, color: PieceColor) {
@@ -250,5 +227,22 @@ export class Board {
       }
     }
     return false;
+  }
+
+  calculateLegalMoves(): Record<number, number[]> {
+    const legalMoves: Record<number, number[]> = {};
+    for (let i = 0; i < this.squares.length; i++) {
+      const piece = this.squares[i];
+      if (piece === null) {
+        continue;
+      }
+      legalMoves[i] = [];
+      for (let j = 0; j < this.squares.length; j++) {
+        if (piece.canMove(j) && piece.isMoveLegal(j)) {
+          legalMoves[i].push(j);
+        }
+      }
+    }
+    return legalMoves;
   }
 }

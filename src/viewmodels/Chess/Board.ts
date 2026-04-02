@@ -1,57 +1,38 @@
-import { Board } from '@/models/Board';
+import type { Square } from '@/models/Board';
+import type { Chess } from '@/models/Chess';
+import type { Piece } from '@/models/Piece';
 import { ViewModel } from '@/utils/ViewModel';
 
 export interface ChessState {
   selectedSquare: number;
-  availableMoves: number[];
 }
 
 export class BoardViewModel extends ViewModel<ChessState> {
-  protected board: Board;
+  protected chess: Chess;
 
-  constructor(board: Board) {
-    super({ selectedSquare: -1, availableMoves: [] });
-    this.board = board;
+  constructor(chess: Chess) {
+    super({ selectedSquare: -1 });
+    this.chess = chess;
   }
 
-  protected setSelectedSquare(index: number) {
-    this.setState({
-      selectedSquare: index,
-      availableMoves: this.calculateAvailableMoves(index),
-    });
+  get squares(): Square[] {
+    return this.chess.squares;
   }
-
-  protected calculateAvailableMoves(selectedSquare: number) {
-    const selectedPiece = this.board.getPieceAt(selectedSquare);
-    return selectedPiece?.getLegalMoves() || [];
-  }
-
-  getPieces = () => {
-    return this.board.getPieces();
-  };
-
-  getSquares = () => {
-    return this.board.squares;
-  };
 
   selectSquare = (index: number) => {
-    const { board, state } = this;
-    const targetPiece = this.board.getPieceAt(index);
-    const selectedPiece = this.board.getPieceAt(state.selectedSquare);
+    const { chess, state } = this;
+    const targetPiece = chess.getSquare(index);
 
-    if (targetPiece && targetPiece.color === board.turn) {
+    if (targetPiece && targetPiece.color === chess.turn) {
       this.setSelectedSquare(index === state.selectedSquare ? -1 : index);
     } else if (state.selectedSquare >= 0) {
-      if (selectedPiece && state.availableMoves.includes(index)) {
-        selectedPiece.move(index);
-        board.switchTurn();
-      }
+      chess.move(state.selectedSquare, index);
       this.setSelectedSquare(-1);
     }
   };
 
   handleSquaresClick = (event: MouseEvent) => {
-    const { board } = this;
+    const { chess } = this;
 
     const square = event.target as HTMLElement;
     const container = square.parentElement as HTMLElement;
@@ -61,12 +42,22 @@ export class BoardViewModel extends ViewModel<ChessState> {
     const squareX = Math.round((left - x) / width);
     const squareY = Math.round((top - y) / width);
 
-    const index = board.getIndexOf(squareX, squareY);
+    const index = chess.getIndexOf(squareX, squareY);
 
     this.selectSquare(index);
   };
 
   hasPieceAt = (index: number): boolean => {
-    return this.board.getPieceAt(index) !== null;
+    return this.chess.getSquare(index) !== null;
   };
+
+  canMove = (fromIndex: number, toIndex: number): boolean => {
+    return this.chess.canMove(fromIndex, toIndex);
+  };
+
+  protected setSelectedSquare(index: number) {
+    this.setState({
+      selectedSquare: index,
+    });
+  }
 }

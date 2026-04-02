@@ -1,4 +1,4 @@
-import { Board as ChessModel } from './models/Board.ts';
+import { Chess as ChessModel } from '@/models/Chess';
 import Chess from './components/Chess';
 import './styles/index.css';
 

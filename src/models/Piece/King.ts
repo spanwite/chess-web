@@ -77,16 +77,7 @@ export class King extends Piece {
   }
 
   canMove(index: number): boolean {
-    const target = this.board.getCoordinatesOf(index);
-    const { x, y } = this.getCoordinates();
-    return Math.abs(x - target.x) <= 1 && Math.abs(y - target.y) <= 1;
-  }
-
-  getLegalMoves(): number[] {
-    return this.board.squares.filter(
-      (index) =>
-        (this.canMove(index) || this.canCastle(index)) && super.canMove(index)
-    );
+    return super.canMoveInRadius(index, 1) || this.canCastle(index) !== false;
   }
 
   move(index: number): void {

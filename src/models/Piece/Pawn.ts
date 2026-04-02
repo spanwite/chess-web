@@ -64,10 +64,4 @@ export class Pawn extends Piece {
   canMove(index: number): boolean {
     return this.canMoveVertically(index) || this.canMoveDiagonally(index);
   }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
-  }
 }

@@ -10,10 +10,4 @@ export class Bishop extends Piece {
   canMove(index: number): boolean {
     return super.canMoveDiagonally(index) || super.canMoveAntiDiagonally(index);
   }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
-  }
 }

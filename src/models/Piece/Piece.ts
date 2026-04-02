@@ -1,5 +1,5 @@
 import { PieceName, PieceColor } from './types';
-import type { Board, BoardMove } from '../Board';
+import type { Board } from '../Board';
 import { generateId } from '@/utils/string';
 
 export type Position = { x: number; y: number };
@@ -189,15 +189,24 @@ export abstract class Piece {
     return true;
   }
 
+  canMoveInRadius(index: number, radius: number): boolean {
+    const target = this.board.getCoordinatesOf(index);
+    const { x, y } = this.getCoordinates();
+    return Math.abs(x - target.x) <= radius && Math.abs(y - target.y) <= radius;
+  }
+
   isAttacked(): boolean {
     return this.board.isSquareAttackedBy(this.index, this.enemyColor);
   }
 
-  canMove(index: number): boolean {
+  isMoveLegal(index: number): boolean {
     const piece = this.board.getPieceAt(index);
     if (piece && this.isSameColor(piece)) return false;
 
-    const king = this.board.getKing(this.color);
+    const [king] = this.board.findPieces({
+      color: this.color,
+      name: PieceName.King,
+    });
     this.board.movePiece(this, index);
     const isAttacked = king.isAttacked();
     this.board.undoLastMove();
@@ -250,5 +259,5 @@ export abstract class Piece {
     return false;
   }
 
-  abstract getLegalMoves(): number[];
+  abstract canMove(index: number): boolean;
 }

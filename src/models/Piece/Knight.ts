@@ -20,10 +20,4 @@ export class Knight extends Piece {
 
     return false;
   }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
-  }
 }

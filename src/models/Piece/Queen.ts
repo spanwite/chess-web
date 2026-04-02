@@ -15,10 +15,4 @@ export class Queen extends Piece {
       super.canMoveVertically(index)
     );
   }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
-  }
 }
