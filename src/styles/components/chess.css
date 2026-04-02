@@ -1,4 +1,4 @@
-.board {
+.chess-board {
   --board-size: calc(min(100vh, 100vw));
   --square-bg-white: green;
   --square-bg-black: orange;
@@ -11,14 +11,14 @@
   position: relative;
 }
 
-.squares {
+.chess-board__squares {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   width: var(--board-size);
   height: var(--board-size);
 }
 
-.square {
+.chess-board-square {
   background-color: var(--square-bg-white);
   user-select: none;
   position: relative;
@@ -38,7 +38,7 @@
     background-color: var(--square-bg-selected);
   }
 
-  &.is-available {
+  &.is-highlighted {
     background-color: var(--square-bg-available);
   }
 
@@ -47,14 +47,14 @@
   }
 }
 
-.square-mark {
+.chess-board-square__mark {
   width: var(--square-mark-size);
   height: var(--square-mark-size);
   border-radius: 100%;
   background-color: var(--square-bg-available-mark);
 }
 
-.square-index {
+.chess-board-square__label {
   text-shadow: 0 0 0.25em black;
   position: absolute;
   font-size: 0.875rem;
@@ -64,7 +64,7 @@
   font-weight: 600;
 }
 
-.pieces {
+.chess-board__pieces {
   width: 100%;
   height: 100%;
 
@@ -73,7 +73,7 @@
   }
 }
 
-.piece {
+.chess-board-piece {
   position: absolute;
   top: 0;
   left: 0;

@@ -3,4 +3,4 @@
 @import './reset.css' layer(reset);
 @import './global.css' layer(base);
 @import './utilities.css' layer(utilities);
-@import './components/board.css' layer(components);
+@import './components/chess.css' layer(components);

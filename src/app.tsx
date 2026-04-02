@@ -1,9 +1,9 @@
-import { useMemo } from 'preact/hooks';
-import { Board as BoardModel } from './models/Board';
-import { Board } from './components/Board';
+import { Board as ChessModel } from './models/Board.ts';
+import Chess from './components/Chess';
+import './styles/index.css';
+
+const chess = new ChessModel();
 
 export function App() {
-  const board = useMemo(() => new BoardModel(), []);
-
-  return <Board model={board} />;
+  return <Chess model={chess} />;
 }
