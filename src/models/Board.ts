@@ -41,14 +41,14 @@ export interface BoardMove {
 
 export class Board {
   static initialFEN = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w';
-  public readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
+  readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
   protected kingSymbols = {
     [PieceColor.White]: Symbol('white-king'),
     [PieceColor.Black]: Symbol('black-king'),
   };
-  public turn: PieceColor = PieceColor.White;
-  public moves: BoardMove[] = [];
-  public undoLastMove = noop;
+  turn: PieceColor = PieceColor.White;
+  moves: BoardMove[] = [];
+  undoLastMove = noop;
 
   readonly size = 8;
   pieces: Record<number | symbol, Piece> = {};

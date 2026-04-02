@@ -9,16 +9,16 @@ export abstract class Piece {
    * Уникальный идентификатор фигуры
    * @remarks Необходим для корректной отрисовки в React
    */
-  public readonly id = generateId();
+  readonly id = generateId();
 
   /** Индекс клетки, на которой расположена фигура в данный момент */
-  public index = -1;
+  index = -1;
 
   /** Имя фигуры */
-  public readonly name: PieceName;
+  readonly name: PieceName;
 
   /** Цвет фигуры */
-  public readonly color: PieceColor;
+  readonly color: PieceColor;
 
   /** Доска, на которой располагается фигура */
   protected readonly board: Board;
@@ -27,7 +27,7 @@ export abstract class Piece {
    * Буквенное наименование фигуры
    * @remarks Используется в алгебраической нотации
    */
-  public readonly letter: string;
+  readonly letter: string;
 
   constructor(
     name: PieceName,
