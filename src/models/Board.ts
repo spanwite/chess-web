@@ -10,7 +10,7 @@ import {
   Knight,
   PieceName,
 } from './Piece';
-import type { Position } from './Piece/Piece';
+import type { Coordinates } from './Piece/Piece';
 import { list } from '@/utils/array';
 import { noop } from '@/utils/function';
 
@@ -79,11 +79,11 @@ export class Board {
     return Math.floor(index / this.size);
   }
 
-  getCoordinatesOf(index: number): Position {
-    return {
-      x: this.getXOf(index),
-      y: this.getYOf(index),
-    };
+  /**
+   * @returns Координаты клетки в виде кортежа [x, y].
+   */
+  getCoordinatesOf(index: number): [number, number] {
+    return [this.getXOf(index), this.getYOf(index)];
   }
 
   getFileOf(index: number): (typeof this.files)[number] {
@@ -238,7 +238,7 @@ export class Board {
       }
       legalMoves[i] = [];
       for (let j = 0; j < this.squares.length; j++) {
-        if (piece.canMove(j) && piece.isMoveLegal(j)) {
+        if (piece.canMove(j) && piece.canMoveLegally(j)) {
           legalMoves[i].push(j);
         }
       }

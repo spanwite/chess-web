@@ -18,13 +18,16 @@ export class King extends Piece {
    * @param index - Индекс клетки
    */
   protected isCastlingSquare(index: number): boolean {
-    const { x, y } = this.getCoordinates();
-    const target = this.board.getCoordinatesOf(index);
-    const diffX = Math.abs(x - target.x);
-    const diffY = Math.abs(y - target.y);
-    if (diffY === 0 && diffX === 2) {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+
+    const deltaX = Math.abs(selfX - targetX);
+    const deltaY = Math.abs(selfY - targetY);
+
+    if (deltaY === 0 && deltaX === 2) {
       return true;
     }
+
     return false;
   }
 
@@ -37,12 +40,12 @@ export class King extends Piece {
    * @param direction - Направление хода.
    */
   protected findCastlingRook(direction: MoveDirection): Rook | null {
-    const coordinates = this.getCoordinates();
+    const [selfX, selfY] = this.getCoordinates();
 
-    let x = coordinates.x;
+    let x = selfX;
     while (x >= 0 && x < this.board.size) {
       x += direction;
-      const piece = this.board.getPieceAt(x, coordinates.y);
+      const piece = this.board.getPieceAt(x, selfY);
       if (piece && piece.name === PieceName.Rook) {
         return piece;
       }

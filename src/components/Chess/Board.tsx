@@ -30,7 +30,7 @@ export default function Board({ model }: BoardProps) {
     if (!piece) {
       return;
     }
-    const { x, y } = piece.getCoordinates();
+    const [x, y] = piece.getCoordinates();
     return (
       <Piece x={x} y={y} color={piece.color} name={piece.name} key={piece.id} />
     );

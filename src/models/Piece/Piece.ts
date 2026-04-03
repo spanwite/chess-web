@@ -2,7 +2,7 @@ import { PieceName, PieceColor } from './types';
 import type { Board } from '../Board';
 import { generateId } from '@/utils/string';
 
-export type Position = { x: number; y: number };
+export type Coordinates = { x: number; y: number };
 
 export abstract class Piece {
   /**
@@ -45,76 +45,58 @@ export abstract class Piece {
   get isWhite() {
     return this.color === PieceColor.White;
   }
-
   get enemyColor() {
     return this.color === PieceColor.White
       ? PieceColor.Black
       : PieceColor.White;
   }
-
-  getCoordinates() {
-    return this.board.getCoordinatesOf(this.index);
-  }
-
   isSameColor(piece: Piece) {
     return this.color === piece.color;
   }
 
-  onSameHorizontal(index: number): boolean;
-  onSameHorizontal(x: number, y: number): boolean;
-  onSameHorizontal(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-    return self.y === target.y;
+  getX(): number {
+    return this.board.getXOf(this.index);
+  }
+  getY(): number {
+    return this.board.getYOf(this.index);
+  }
+  getCoordinates(): [number, number] {
+    return this.board.getCoordinatesOf(this.index);
+  }
+  isAttacked(): boolean {
+    return this.board.isSquareAttackedBy(this.index, this.enemyColor);
   }
 
-  onSameVertical(index: number): boolean;
-  onSameVertical(x: number, y: number): boolean;
-  onSameVertical(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-    return self.x === target.x;
+  isOnSameHorizontal(index: number): boolean {
+    return this.getY() === this.board.getYOf(index);
+  }
+  isOnSameVertical(index: number): boolean {
+    return this.getX() === this.board.getXOf(index);
+  }
+  isOnSameDiagonal(index: number): boolean {
+    return (
+      this.getY() + this.getX() ===
+      this.board.getXOf(index) + this.board.getYOf(index)
+    );
+  }
+  isOnSameAntiDiagonal(index: number): boolean {
+    return (
+      this.getY() - this.getX() ===
+      this.board.getYOf(index) - this.board.getXOf(index)
+    );
   }
 
-  onSameDiagonal(index: number): boolean;
-  onSameDiagonal(x: number, y: number): boolean;
-  onSameDiagonal(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-    return selfCoords.y + selfCoords.x === targetCoords.y + targetCoords.x;
-  }
+  canMoveDiagonally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
 
-  onSameAntiDiagonal(index: number): boolean;
-  onSameAntiDiagonal(x: number, y: number): boolean;
-  onSameAntiDiagonal(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-    return selfCoords.y - selfCoords.x === targetCoords.y - targetCoords.x;
-  }
-
-  canMoveDiagonally(index: number): boolean;
-  canMoveDiagonally(x: number, y: number): boolean;
-  canMoveDiagonally(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-
-    if (!this.onSameDiagonal(target.x, target.y)) {
+    if (!this.isOnSameDiagonal(index)) {
       return false;
     }
 
-    const maxY = Math.max(self.y, target.y);
-    const minX = Math.min(self.x, target.x);
-    const maxX = Math.max(self.x, target.x);
+    const maxY = Math.max(selfY, targetY);
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     let x = minX + 1;
     let y = maxY - 1;
 
@@ -129,22 +111,17 @@ export abstract class Piece {
     return true;
   }
 
-  canMoveAntiDiagonally(index: number): boolean;
-  canMoveAntiDiagonally(x: number, y: number): boolean;
-  canMoveAntiDiagonally(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
+  canMoveAntiDiagonally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
 
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-
-    if (!this.onSameAntiDiagonal(targetCoords.x, targetCoords.y)) {
+    if (!this.isOnSameAntiDiagonal(index)) {
       return false;
     }
 
-    const maxY = Math.max(selfCoords.y, targetCoords.y);
-    const minX = Math.min(selfCoords.x, targetCoords.x);
-    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    const maxY = Math.max(selfY, targetY);
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     let x = maxX - 1;
     let y = maxY - 1;
 
@@ -159,47 +136,44 @@ export abstract class Piece {
     return true;
   }
 
-  canMoveHorizontally(index: number): boolean;
-  canMoveHorizontally(x: number, y: number): boolean;
-  canMoveHorizontally(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.getCoordinatesOf(arg1);
-    if (selfCoords.y !== targetCoords.y) return false;
+  canMoveHorizontally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const targetX = this.board.getXOf(index);
 
-    const minX = Math.min(selfCoords.x, targetCoords.x);
-    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    if (!this.isOnSameHorizontal(index)) return false;
+
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     for (let x = minX + 1; x < maxX; x++) {
-      if (this.board.getPieceAt(x, selfCoords.y) !== null) return false;
+      if (this.board.getPieceAt(x, selfY) !== null) return false;
     }
     return true;
   }
 
   canMoveVertically(index: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = this.board.getCoordinatesOf(index);
-    if (selfCoords.x !== targetCoords.x) return false;
+    const [selfX, selfY] = this.getCoordinates();
+    const targetY = this.board.getYOf(index);
 
-    const minY = Math.min(selfCoords.y, targetCoords.y);
-    const maxY = Math.max(selfCoords.y, targetCoords.y);
+    if (!this.isOnSameVertical(index)) return false;
+
+    const minY = Math.min(selfY, targetY);
+    const maxY = Math.max(selfY, targetY);
     for (let y = minY + 1; y < maxY; y++) {
-      if (this.board.getPieceAt(selfCoords.x, y) !== null) return false;
+      if (this.board.getPieceAt(selfX, y) !== null) return false;
     }
     return true;
   }
 
   canMoveInRadius(index: number, radius: number): boolean {
-    const target = this.board.getCoordinatesOf(index);
-    const { x, y } = this.getCoordinates();
-    return Math.abs(x - target.x) <= radius && Math.abs(y - target.y) <= radius;
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+
+    return (
+      Math.abs(selfX - targetX) <= radius && Math.abs(selfY - targetY) <= radius
+    );
   }
 
-  isAttacked(): boolean {
-    return this.board.isSquareAttackedBy(this.index, this.enemyColor);
-  }
-
-  isMoveLegal(index: number): boolean {
+  canMoveLegally(index: number): boolean {
     const piece = this.board.getPieceAt(index);
     if (piece && this.isSameColor(piece)) return false;
 
