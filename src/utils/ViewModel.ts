@@ -1,34 +1,20 @@
-export type Listener<T> = (state: T) => void;
+export type Listener = () => void;
 
-export abstract class ViewModel<State extends object> {
-  protected _state: State;
-  private listeners = new Set<Listener<State>>();
+export abstract class ViewModel {
+  private listeners = new Set<Listener>();
 
-  constructor(initialState: State) {
-    this._state = initialState;
-  }
-
-  get state(): Readonly<State> {
-    return this._state;
-  }
-
-  protected setState(updates: Partial<State>): void {
-    this._state = { ...this._state, ...updates };
-    this.notify();
-  }
-
-  subscribe(listener: Listener<State>): () => void {
+  public subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
     };
   }
 
-  private notify(): void {
-    this.listeners.forEach((listener) => listener(this.state));
+  public dispose(): void {
+    this.listeners.clear();
   }
 
-  dispose(): void {
-    this.listeners.clear();
+  protected notify(): void {
+    this.listeners.forEach((listener) => listener());
   }
 }

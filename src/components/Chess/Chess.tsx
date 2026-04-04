@@ -1,6 +1,6 @@
 import type { Chess as ChessModel } from '@/models/Chess';
 import Board from './Board';
-import { BoardViewModel } from '@/viewmodels/Chess/Board';
+import { BoardViewModel } from '@/viewmodels/Chess/BoardViewModel';
 import { useMemo } from 'preact/hooks';
 
 export interface ChessProps {
