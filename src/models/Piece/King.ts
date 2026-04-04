@@ -8,31 +8,54 @@ import { PieceName, type PieceColor } from './types';
  */
 type MoveDirection = -1 | 1;
 
+export const enum CastlingType {
+  Kingside = 'O-O',
+  Queenside = 'O-O-O',
+}
+
 export class King extends Piece {
   constructor(color: PieceColor, board: Board) {
     super(PieceName.King, color, board);
+  }
+
+  protected getCastlingDirection(index: number): MoveDirection {
+    return index > this.index ? 1 : -1;
+  }
+
+  protected getCastlingCoordinates(direction: MoveDirection): [number, number] {
+    const [_, initialY] = this.board.getCoordinatesOf(this.initialIndex);
+    return [direction === 1 ? 6 : 2, initialY];
   }
 
   /**
    * Проверяет, является ли клетка местом для выполнения рокировки.
    * @param index - Индекс клетки
    */
-  protected isCastlingSquare(index: number): boolean {
-    const [selfX, selfY] = this.getCoordinates();
-    const [targetX, targetY] = this.board.getCoordinatesOf(index);
-
-    const deltaX = Math.abs(selfX - targetX);
-    const deltaY = Math.abs(selfY - targetY);
-
-    if (deltaY === 0 && deltaX === 2) {
-      return true;
+  protected getCastlingInfo(
+    index: number
+  ): null | [MoveDirection, Rook, number, number] {
+    if (index === this.index) {
+      return null;
+    }
+    const direction = this.getCastlingDirection(index);
+    const rook = this.findCastlingRook(direction);
+    if (!rook) {
+      return null;
     }
 
-    return false;
-  }
+    const [, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+    const [, initialY] = this.board.getCoordinatesOf(this.initialIndex);
+    const [castlingX, castlingY] = this.getCastlingCoordinates(direction);
 
-  protected getCastlingDirection(index: number): MoveDirection {
-    return index > this.index ? 1 : -1;
+    if (
+      rook.index === index ||
+      (selfY === initialY && selfY === targetY && targetX === castlingX)
+    ) {
+      return [direction, rook, castlingX, castlingY];
+    }
+
+    return null;
   }
 
   /**
@@ -58,33 +81,54 @@ export class King extends Piece {
    * Проверяет, может ли фигура сделать рокировку на клетку.
    * @param index - Индекс клетки
    */
-  protected canCastle(index: number): false | [MoveDirection, Rook] {
-    if (!this.isCastlingSquare(index) || this.hasMoved()) {
+  protected canCastle(
+    index: number
+  ): false | [MoveDirection, Rook, number, number] {
+    const castlingInfo = this.getCastlingInfo(index);
+
+    if (!castlingInfo || this.hasMoved()) {
       return false;
     }
 
-    const direction = this.getCastlingDirection(index);
+    const [direction, rook, castlingX, castlingY] = castlingInfo;
+    const castlingIndex = this.board.getIndexOf(castlingX, castlingY);
+
+    if (this.isCastlingAttacked(direction)) {
+      return false;
+    }
+
     if (
-      this.isAttacked() ||
-      this.board.isSquareAttackedBy(index - direction, this.enemyColor)
+      rook.hasMoved() ||
+      !this.canMoveHorizontally(rook.index) ||
+      !rook.canMoveHorizontally(castlingIndex)
     ) {
       return false;
     }
 
-    const rook = this.findCastlingRook(direction);
-    if (!rook || rook.hasMoved() || !this.canMoveHorizontally(rook.index)) {
-      return false;
+    return castlingInfo;
+  }
+
+  protected isCastlingAttacked(direction: MoveDirection): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const castlingX = direction === 1 ? 6 : 2;
+    const minX = Math.min(selfX, castlingX);
+    const maxX = Math.max(selfX, castlingX);
+
+    for (let x = minX; x <= maxX; x++) {
+      if (this.board.isSquareAttackedBy(x, selfY, this.enemyColor)) {
+        return true;
+      }
     }
 
-    return [direction, rook];
+    return false;
   }
 
   override calculateNotation(index: number): string {
-    if (!this.isCastlingSquare(index)) {
+    if (!this.getCastlingInfo(index)) {
       return super.calculateNotation(index);
     }
     const direction = this.getCastlingDirection(index);
-    return direction === -1 ? 'O-O-O' : 'O-O';
+    return direction === -1 ? CastlingType.Queenside : CastlingType.Kingside;
   }
 
   override canMove(index: number): boolean {

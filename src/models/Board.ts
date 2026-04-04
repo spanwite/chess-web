@@ -116,7 +116,15 @@ export class Board {
     return pieces;
   }
 
-  isSquareAttackedBy(index: number, color: PieceColor) {
+  isSquareAttackedBy(index: number, color: PieceColor): boolean;
+  isSquareAttackedBy(x: number, y: number, color: PieceColor): boolean;
+  isSquareAttackedBy(
+    arg1: number,
+    arg2?: number | PieceColor,
+    arg3?: PieceColor
+  ): boolean {
+    const index = typeof arg2 === 'number' ? this.getIndexOf(arg1, arg2) : arg1;
+    const color = typeof arg2 === 'number' ? arg3! : arg2!;
     const enemyPieces = this.findPieces({
       color,
     });
@@ -138,7 +146,11 @@ export class Board {
       }
       legalMoves[i] = [];
       for (let j = 0; j < this.squares.length; j++) {
-        if (piece.canMove(j) && piece.canMoveLegally(j)) {
+        if (
+          piece.canMoveLegally(j) &&
+          piece.canMove(j) &&
+          piece.canMoveSafely(j)
+        ) {
           legalMoves[i].push(j);
         }
       }

@@ -51,10 +51,7 @@ export abstract class Piece {
 
   public abstract canMove(index: number): boolean;
 
-  public canMoveLegally(index: number): boolean {
-    const piece = this.board.getPieceAt(index);
-    if (piece && this.isSameColor(piece)) return false;
-
+  public canMoveSafely(index: number): boolean {
     const [king] = this.board.findPieces({
       color: this.color,
       name: PieceName.King,
@@ -64,6 +61,14 @@ export abstract class Piece {
     this.revertMoves(moves);
 
     return !isAttacked;
+  }
+
+  public canMoveLegally(index: number): boolean {
+    const piece = this.board.getPieceAt(index);
+    if (piece === null) {
+      return true;
+    }
+    return !this.isSameColor(piece);
   }
 
   /**
@@ -248,7 +253,7 @@ export abstract class Piece {
     return true;
   }
 
-  protected canMoveHorizontally(index: number): boolean {
+  public canMoveHorizontally(index: number): boolean {
     const [selfX, selfY] = this.getCoordinates();
     const targetX = this.board.getXOf(index);
 
