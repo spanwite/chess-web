@@ -27,7 +27,7 @@ export default function Board({ model }: BoardProps) {
   });
 
   const $pieces = squares.map((piece) => {
-    if (!piece) {
+    if (piece === null) {
       return;
     }
     const [x, y] = piece.getCoordinates();

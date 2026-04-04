@@ -2,7 +2,7 @@ import { Board, type Square } from './Board';
 import { PieceColor } from './Piece';
 
 export class Chess {
-  protected board = new Board();
+  protected board: Board = new Board();
   protected legalMoves: Record<number, number[]> =
     this.board.calculateLegalMoves();
   protected _turn: PieceColor = PieceColor.White;
@@ -28,11 +28,10 @@ export class Chess {
   }
 
   move(fromIndex: number, toIndex: number): boolean {
-    const movingPiece = this.board.getPieceAt(fromIndex);
-    if (!movingPiece || !this.canMove(fromIndex, toIndex)) {
+    if (!this.canMove(fromIndex, toIndex)) {
       return false;
     }
-    movingPiece.move(toIndex);
+    this.board.move(fromIndex, toIndex);
     this.switchTurn();
     this.legalMoves = this.board.calculateLegalMoves();
     return true;

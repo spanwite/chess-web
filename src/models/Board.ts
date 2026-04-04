@@ -1,31 +1,19 @@
+import { list } from '@/utils/array';
 import { isUppercase } from '@/utils/string';
 import {
-  Piece,
+  Bishop,
   King,
+  Knight,
   Pawn,
+  Piece,
   PieceColor,
+  PieceName,
   Queen,
   Rook,
-  Bishop,
-  Knight,
-  PieceName,
 } from './Piece';
-import type { Coordinates } from './Piece/Piece';
-import { list } from '@/utils/array';
-import { noop } from '@/utils/function';
+import type { PieceMove } from './Piece/Piece';
 
 export type Square = Piece | null;
-
-export interface PieceMove {
-  /** Фигура, совершающая перемещение */
-  piece: Piece;
-  /** Фигура, съеденная перемещающейся фигурой */
-  eatenPiece: Piece | null;
-  /** Индекс клетки, с которой фигура начинает перемещение */
-  fromIndex: number;
-  /** Индекс клетки, на которую фигура перемещается */
-  toIndex: number;
-}
 
 export interface BoardMove {
   /** Алгебраическая нотация хода */
@@ -36,7 +24,7 @@ export interface BoardMove {
    * Массив тут необходим для обработки рокировки короля.
    * Рокировка подразумевает движение сразу двух фигур.
    */
-  moves: PieceMove[];
+  movedPieces: PieceMove[];
 }
 
 const FENCollection = {
@@ -45,18 +33,26 @@ const FENCollection = {
 };
 
 export class Board {
-  readonly size = 8;
-  readonly length = this.size * this.size;
-  readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
-  readonly ranks = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+  public readonly size = 8;
+  public readonly length = this.size * this.size;
+  public readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
+  public readonly ranks = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-  moves: BoardMove[] = [];
-  undoLastMove = noop;
-
-  squares: Square[] = Array(this.length).fill(null);
+  public squares: Square[] = Array(this.length).fill(null);
+  public moves: BoardMove[] = [];
 
   constructor() {
     this.loadFEN(FENCollection.basic);
+  }
+
+  public move(fromIndex: number, toIndex: number): void {
+    const movingPiece = this.getPieceAt(fromIndex);
+    if (!movingPiece) {
+      return;
+    }
+    const notation = movingPiece.calculateNotation(toIndex);
+    const moves = movingPiece.move(toIndex);
+    this.moves.push({ notation, movedPieces: moves });
   }
 
   getIndexOf(x: number, y: number): number {
@@ -95,7 +91,7 @@ export class Board {
   }
 
   loadFEN(fen: string): void {
-    const [rows, turn] = fen.split(' ');
+    const [rows] = fen.split(' ');
 
     let index = 0;
     for (const row of rows.split('/')) {
@@ -109,7 +105,7 @@ export class Board {
 
         const piece = this.createPieceFromFEN(square);
         if (piece) {
-          this.setPieceAt(index, piece);
+          piece.place(index);
         }
 
         index++;
@@ -142,55 +138,9 @@ export class Board {
     return this.squares[index] || null;
   }
 
-  setPieceAt(index: number, piece: Piece): void {
-    this.squares[index] = piece;
-    piece.index = index;
+  setSquare(index: number, square: Square): void {
+    this.squares[index] = square;
   }
-
-  /**
-   * Перемещает фигуру с текущей позиции на переданную клетку
-   * @param piece - Фигура, которая выполнит перемещение
-   * @param index - Индекс клетки, на которую переместится фигура
-   * @returns Функция для отмены выполненного перемещения
-   */
-  movePiece(piece: Piece, index: number): PieceMove {
-    const eatenPiece = this.squares[index];
-    const fromIndex = piece.index;
-
-    this.setPieceAt(index, piece);
-    this.squares[fromIndex] = null;
-
-    this.undoLastMove = () => {
-      if (eatenPiece) {
-        this.setPieceAt(index, eatenPiece);
-      } else {
-        this.squares[index] = null;
-      }
-      this.setPieceAt(fromIndex, piece);
-      this.undoLastMove = noop;
-    };
-
-    return {
-      piece,
-      eatenPiece,
-      fromIndex,
-      toIndex: index,
-    };
-  }
-
-  // undoMoves(count = 1) {
-  //   while (count > 0) {
-  //     const move = this.turns.pop();
-  //     if (!move) break;
-  //     if (move.eatenPiece) {
-  //       this.setPieceAt(move.toIndex, move.eatenPiece);
-  //     } else {
-  //       delete this.pieces[move.toIndex];
-  //     }
-  //     this.setPieceAt(move.fromIndex, move.piece);
-  //     count--;
-  //   }
-  // }
 
   findPieces(where: {
     color?: PieceColor;

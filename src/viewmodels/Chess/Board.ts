@@ -1,6 +1,5 @@
 import type { Square } from '@/models/Board';
 import type { Chess } from '@/models/Chess';
-import type { Piece } from '@/models/Piece';
 import { ViewModel } from '@/utils/ViewModel';
 
 export interface ChessState {

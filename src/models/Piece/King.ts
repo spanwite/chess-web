@@ -1,5 +1,5 @@
-import type { Board, BoardMove } from '../Board';
-import { Piece } from './Piece';
+import type { Board } from '../Board';
+import { Piece, type PieceMove } from './Piece';
 import type { Rook } from './Rook';
 import { PieceName, type PieceColor } from './types';
 
@@ -79,26 +79,27 @@ export class King extends Piece {
     return [direction, rook];
   }
 
-  canMove(index: number): boolean {
+  override calculateNotation(index: number): string {
+    if (!this.isCastlingSquare(index)) {
+      return super.calculateNotation(index);
+    }
+    const direction = this.getCastlingDirection(index);
+    return direction === -1 ? 'O-O-O' : 'O-O';
+  }
+
+  override canMove(index: number): boolean {
     return super.canMoveInRadius(index, 1) || this.canCastle(index) !== false;
   }
 
-  move(index: number): void {
+  override move(index: number): PieceMove[] {
     const canCastle = this.canCastle(index);
 
     if (!canCastle) {
-      super.move(index);
-      return;
+      return super.move(index);
     }
 
     const [direction, rook] = canCastle;
-    const kingMove = this.board.movePiece(this, index);
-    const rookMove = this.board.movePiece(rook, index - direction);
-    const notation = direction === -1 ? 'O-O-O' : 'O-O';
 
-    this.board.moves.push({
-      notation,
-      moves: [kingMove, rookMove],
-    });
+    return [...super.move(index), ...rook.move(index - direction)];
   }
 }
