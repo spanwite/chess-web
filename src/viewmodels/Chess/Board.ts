@@ -1,5 +1,6 @@
 import type { Square } from '@/models/Board';
 import type { Chess } from '@/models/Chess';
+import type { Piece } from '@/models/Piece';
 import { ViewModel } from '@/utils/ViewModel';
 
 export interface ChessState {
@@ -16,6 +17,12 @@ export class BoardViewModel extends ViewModel<ChessState> {
 
   get squares(): Square[] {
     return this.chess.squares;
+  }
+
+  get pieces(): Piece[] {
+    return this.squares
+      .filter((square) => square !== null)
+      .sort((a, b) => a.initialIndex - b.initialIndex);
   }
 
   selectSquare = (index: number) => {

@@ -1,6 +1,5 @@
 import { PieceName, PieceColor } from './types';
 import type { Board } from '../Board';
-import { generateId } from '@/utils/string';
 import type { NestedArray } from '@/utils/types';
 
 export interface PieceMove {
@@ -17,11 +16,7 @@ export interface PieceMove {
 export type Coordinates = { x: number; y: number };
 
 export abstract class Piece {
-  /**
-   * Уникальный идентификатор фигуры
-   * @remarks Необходим для корректной отрисовки в React
-   */
-  public readonly id = generateId();
+  public initialIndex: number = -1;
 
   /** Индекс клетки, на которой расположена фигура в данный момент */
   public index = -1;
@@ -115,6 +110,9 @@ export abstract class Piece {
   }
 
   public place(toIndex: number): void {
+    if (this.initialIndex === -1) {
+      this.initialIndex = toIndex;
+    }
     this.index = toIndex;
     this.board.setSquare(toIndex, this);
   }
