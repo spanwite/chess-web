@@ -1,5 +1,5 @@
 import { isUppercase } from '@/utils/string';
-import { Board, type Square } from './Board';
+import { Board, type CastlingRules, type Square } from './Board';
 import { Bishop, King, Knight, Pawn, PieceColor, Queen, Rook } from './Piece';
 
 export class Chess {
@@ -8,7 +8,7 @@ export class Chess {
   protected _turn: PieceColor = PieceColor.White;
 
   constructor() {
-    this.loadFEN('rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w');
+    this.loadFEN('rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq');
   }
 
   get squares(): Square[] {
@@ -47,9 +47,10 @@ export class Chess {
   }
 
   loadFEN(fen: string): void {
-    const [rows, turn] = fen.split(' ');
+    const [rows, turn, castling] = fen.split(' ');
 
-    this._turn = this.getColorFromFEN(turn);
+    this.setTurn(turn);
+    this.setCastlingRules(castling);
 
     let index = 0;
     for (const row of rows.split('/')) {
@@ -86,7 +87,29 @@ export class Chess {
     return true;
   }
 
-  getColorFromFEN(char: string): PieceColor {
-    return char === 'w' ? PieceColor.White : PieceColor.Black;
+  setTurn(fenLetter: string): boolean {
+    fenLetter = fenLetter.toLowerCase();
+    if (fenLetter === 'w') {
+      this._turn = PieceColor.White;
+      return true;
+    }
+    if (fenLetter === 'b') {
+      this._turn = PieceColor.Black;
+      return true;
+    }
+    return false;
+  }
+
+  setCastlingRules(fenCastling: string): void {
+    this.board.castlingRules = {
+      [PieceColor.White]: {
+        kingside: fenCastling.includes('K'),
+        queenside: fenCastling.includes('Q'),
+      },
+      [PieceColor.Black]: {
+        kingside: fenCastling.includes('k'),
+        queenside: fenCastling.includes('q'),
+      },
+    };
   }
 }

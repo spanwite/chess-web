@@ -8,10 +8,12 @@ import { PieceName, type PieceColor } from './types';
  */
 type MoveDirection = -1 | 1;
 
-export const enum CastlingType {
-  Kingside = 'O-O',
-  Queenside = 'O-O-O',
-}
+export type CastlingType = 'kingside' | 'queenside';
+
+export const CastlingNotation: Record<CastlingType, string> = {
+  kingside: 'O-O',
+  queenside: 'O-O-O',
+};
 
 export class King extends Piece {
   constructor(color: PieceColor, board: Board) {
@@ -91,6 +93,10 @@ export class King extends Piece {
     }
 
     const [direction, rook, castlingX, castlingY] = castlingInfo;
+    const castlingType = direction === 1 ? 'kingside' : 'queenside';
+    if (!this.board.castlingRules[this.color][castlingType]) {
+      return false;
+    }
     const castlingIndex = this.board.getIndexOf(castlingX, castlingY);
 
     if (this.isCastlingAttacked(direction)) {
@@ -128,7 +134,9 @@ export class King extends Piece {
       return super.calculateNotation(index);
     }
     const direction = this.getCastlingDirection(index);
-    return direction === -1 ? CastlingType.Queenside : CastlingType.Kingside;
+    return direction === -1
+      ? CastlingNotation.queenside
+      : CastlingNotation.kingside;
   }
 
   override canMove(index: number): boolean {

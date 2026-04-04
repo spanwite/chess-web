@@ -12,6 +12,7 @@ import {
   Rook,
 } from './Piece';
 import type { PieceMove } from './Piece/Piece';
+import type { CastlingType } from './Piece/King';
 
 export type Square = Piece | null;
 
@@ -27,6 +28,10 @@ export interface BoardMove {
   movedPieces: PieceMove[];
 }
 
+export type CastlingRules = {
+  [color in PieceColor]: Record<CastlingType, boolean>;
+};
+
 export class Board {
   public readonly size = 8;
   public readonly length = this.size * this.size;
@@ -35,6 +40,17 @@ export class Board {
 
   public squares: Square[] = Array(this.length).fill(null);
   public moves: BoardMove[] = [];
+
+  public castlingRules: CastlingRules = {
+    [PieceColor.White]: {
+      kingside: true,
+      queenside: true,
+    },
+    [PieceColor.Black]: {
+      kingside: true,
+      queenside: true,
+    },
+  };
 
   public move(fromIndex: number, toIndex: number): void {
     const movingPiece = this.getPieceAt(fromIndex);
