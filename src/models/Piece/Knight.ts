@@ -8,22 +8,16 @@ export class Knight extends Piece {
   }
 
   canMove(index: number) {
-    const self = this.board.coordinatesOf(this.index);
-    const target = this.board.coordinatesOf(index);
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
 
-    const diffY = Math.abs(target.y - self.y);
-    const diffX = Math.abs(target.x - self.x);
+    const deltaY = Math.abs(selfY - targetY);
+    const deltaX = Math.abs(selfX - targetX);
 
-    if ((diffY === 2 && diffX === 1) || (diffY === 1 && diffX === 2)) {
+    if ((deltaY === 2 && deltaX === 1) || (deltaY === 1 && deltaX === 2)) {
       return true;
     }
 
     return false;
-  }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
   }
 }

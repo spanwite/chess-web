@@ -8,64 +8,55 @@ export class Pawn extends Piece {
   }
 
   canMoveVertically(index: number): boolean {
-    if (!this.onSameVertical(index)) {
+    if (!this.isOnSameVertical(index)) {
       return false;
     }
-    const target = this.board.coordinatesOf(index);
+    const [, selfY] = this.getCoordinates();
+    const [, targetY] = this.board.getCoordinatesOf(index);
     const piece = this.board.getPieceAt(index);
-    const self = this.getCoordinates();
 
     if (this.isWhite) {
-      if (target.y > self.y) return false;
+      if (targetY > selfY) return false;
     } else {
-      if (target.y < self.y) return false;
+      if (targetY < selfY) return false;
     }
 
-    const diffY = Math.abs(target.y - self.y);
+    const diffY = Math.abs(selfY - targetY);
 
     if (diffY === 1) {
       return piece === null;
     }
 
     const startY = this.isWhite ? 6 : 1;
-    if (diffY === 2 && startY === self.y) {
+    if (diffY === 2 && startY === selfY) {
       return piece === null && super.canMoveVertically(index);
     }
 
     return false;
   }
 
-  canMoveDiagonally(index: number): boolean;
-  canMoveDiagonally(x: number, y: number): boolean;
-  canMoveDiagonally(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
-    const index = this.board.indexOf(target.x, target.y);
-    const piece = this.board.getPieceAt(index);
-
-    if (!super.onSameDiagonal(index) && !this.onSameAntiDiagonal(index)) {
+  canMoveDiagonally(index: number): boolean {
+    if (!super.isOnSameDiagonal(index) && !this.isOnSameAntiDiagonal(index)) {
       return false;
     }
 
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+    const piece = this.board.getPieceAt(index);
+
     if (this.isWhite) {
-      if (target.y > self.y) return false;
+      if (targetY > selfY) return false;
     } else {
-      if (target.y < self.y) return false;
+      if (targetY < selfY) return false;
     }
 
-    const diffY = Math.abs(target.y - self.y);
-    const diffX = Math.abs(target.x - self.x);
+    const deltaY = Math.abs(targetY - selfY);
+    const deltaX = Math.abs(targetX - selfX);
 
-    return diffY <= 1 && diffX === 1 && piece !== null;
+    return deltaY <= 1 && deltaX === 1 && piece !== null;
   }
 
   canMove(index: number): boolean {
     return this.canMoveVertically(index) || this.canMoveDiagonally(index);
-  }
-
-  getLegalMoves() {
-    return this.board.squares.filter(
-      (index) => this.canMove(index) && super.canMove(index)
-    );
   }
 }

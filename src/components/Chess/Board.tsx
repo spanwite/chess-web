@@ -8,12 +8,12 @@ export interface BoardProps {
 }
 
 export default function Board({ model }: BoardProps) {
-  const { getPieces, getSquares, handleSquaresClick, hasPieceAt, state } =
+  const { squares, pieces, handleSquaresClick, hasPieceAt, state, canMove } =
     useViewModel(model);
 
-  const $squares = getSquares().map((square) => {
+  const $squares = squares.map((_, square) => {
     const isSelected = state.selectedSquare === square;
-    const isAvailable = state.availableMoves.includes(square);
+    const isAvailable = canMove(state.selectedSquare, square);
     const hasPiece = hasPieceAt(square);
     return (
       <Square
@@ -26,10 +26,16 @@ export default function Board({ model }: BoardProps) {
     );
   });
 
-  const $pieces = getPieces().map((piece) => {
-    const { x, y } = piece.getCoordinates();
+  const $pieces = pieces.map((piece) => {
+    const [x, y] = piece.getCoordinates();
     return (
-      <Piece x={x} y={y} color={piece.color} name={piece.name} key={piece.id} />
+      <Piece
+        x={x}
+        y={y}
+        color={piece.color}
+        name={piece.name}
+        key={piece.initialIndex}
+      />
     );
   });
 

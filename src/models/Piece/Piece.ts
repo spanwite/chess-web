@@ -1,15 +1,22 @@
 import { PieceName, PieceColor } from './types';
-import type { Board, BoardMove } from '../Board';
-import { generateId } from '@/utils/string';
+import type { Board } from '../Board';
+import type { NestedArray } from '@/utils/types';
 
-export type Position = { x: number; y: number };
+export interface PieceMove {
+  /** Фигура, совершающая перемещение */
+  movedPiece: Piece;
+  /** Фигура, съеденная перемещающейся фигурой */
+  eatenPiece: Piece | null;
+  /** Индекс клетки, с которой фигура начинает перемещение */
+  fromIndex: number;
+  /** Индекс клетки, на которую фигура перемещается */
+  toIndex: number;
+}
+
+export type Coordinates = { x: number; y: number };
 
 export abstract class Piece {
-  /**
-   * Уникальный идентификатор фигуры
-   * @remarks Необходим для корректной отрисовки в React
-   */
-  public readonly id = generateId();
+  public initialIndex: number = -1;
 
   /** Индекс клетки, на которой расположена фигура в данный момент */
   public index = -1;
@@ -42,73 +49,166 @@ export abstract class Piece {
       color === PieceColor.White ? letter.toUpperCase() : letter.toLowerCase();
   }
 
-  get isWhite() {
+  public abstract canMove(index: number): boolean;
+
+  public canMoveLegally(index: number): boolean {
+    const piece = this.board.getPieceAt(index);
+    if (piece && this.isSameColor(piece)) return false;
+
+    const [king] = this.board.findPieces({
+      color: this.color,
+      name: PieceName.King,
+    });
+    const moves = this.move(index);
+    const isAttacked = king.isAttacked();
+    this.revertMoves(moves);
+
+    return !isAttacked;
+  }
+
+  /**
+   * Возвращает алгебраическую нотацию хода фигуры на клетку.
+   * @param moveIndex - Индекс клетки назначения
+   */
+  public calculateNotation(moveIndex: number): string {
+    const captureMark = this.board.getPieceAt(moveIndex) !== null ? 'x' : '';
+
+    const piecesCanMoveSimilarly = this.board
+      .findPieces({
+        color: this.color,
+        name: this.name,
+      })
+      .filter((piece) => piece !== this && piece.canMove(moveIndex));
+    const needPrefix =
+      piecesCanMoveSimilarly.length > 0 || (captureMark && !this.letter);
+    const prefix = needPrefix ? this.board.getFileOf(this.index) : '';
+
+    const targetPosition = `${this.board.getFileOf(moveIndex)}${this.board.getRankOf(moveIndex)}`;
+
+    return `${prefix}${this.letter}${captureMark}${targetPosition}`;
+  }
+
+  /**
+   * Перемещает фигуру на клетку.
+   * @param toIndex - Индекс клетки назначения.
+   */
+  public move(toIndex: number): PieceMove[] {
+    const eatenPiece = this.board.getPieceAt(toIndex);
+    const fromIndex = this.index;
+
+    this.place(toIndex);
+    this.board.setSquare(fromIndex, null);
+
+    const move = {
+      movedPiece: this,
+      eatenPiece,
+      fromIndex,
+      toIndex,
+    };
+
+    return [move];
+  }
+
+  public place(toIndex: number): void {
+    if (this.initialIndex === -1) {
+      this.initialIndex = toIndex;
+    }
+    this.index = toIndex;
+    this.board.setSquare(toIndex, this);
+  }
+
+  public revertMoves(...moves: NestedArray<PieceMove>): void {
+    for (const move of moves) {
+      if (Array.isArray(move)) {
+        this.revertMoves(...move);
+      } else {
+        if (move.eatenPiece) {
+          move.eatenPiece.place(move.toIndex);
+        } else {
+          this.board.setSquare(move.toIndex, null);
+        }
+        move.movedPiece.place(move.fromIndex);
+        this.board.setSquare(move.fromIndex, move.movedPiece);
+      }
+    }
+  }
+
+  /**
+   * Проверяет, ходила ли фигура.
+   * @remarks Перебирает массив истории ходов и ищет в нем текущую фигуру.
+   */
+  public hasMoved(): boolean {
+    for (const { movedPieces } of this.board.moves) {
+      for (const { movedPiece } of movedPieces) {
+        if (movedPiece === this) return true;
+      }
+    }
+    return false;
+  }
+
+  public get isWhite() {
     return this.color === PieceColor.White;
   }
 
-  get enemyColor() {
+  public get enemyColor() {
     return this.color === PieceColor.White
       ? PieceColor.Black
       : PieceColor.White;
   }
 
-  getCoordinates() {
-    return this.board.coordinatesOf(this.index);
-  }
-
-  isSameColor(piece: Piece) {
+  public isSameColor(piece: Piece) {
     return this.color === piece.color;
   }
 
-  onSameHorizontal(index: number): boolean;
-  onSameHorizontal(x: number, y: number): boolean;
-  onSameHorizontal(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
-    return self.y === target.y;
+  public getX(): number {
+    return this.board.getXOf(this.index);
   }
 
-  onSameVertical(index: number): boolean;
-  onSameVertical(x: number, y: number): boolean;
-  onSameVertical(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
-    return self.x === target.x;
+  public getY(): number {
+    return this.board.getYOf(this.index);
   }
 
-  onSameDiagonal(index: number): boolean;
-  onSameDiagonal(x: number, y: number): boolean;
-  onSameDiagonal(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
-    return selfCoords.y + selfCoords.x === targetCoords.y + targetCoords.x;
+  public getCoordinates(): [number, number] {
+    return this.board.getCoordinatesOf(this.index);
   }
 
-  onSameAntiDiagonal(index: number): boolean;
-  onSameAntiDiagonal(x: number, y: number): boolean;
-  onSameAntiDiagonal(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
-    return selfCoords.y - selfCoords.x === targetCoords.y - targetCoords.x;
+  protected isAttacked(): boolean {
+    return this.board.isSquareAttackedBy(this.index, this.enemyColor);
   }
 
-  canMoveDiagonally(index: number): boolean;
-  canMoveDiagonally(x: number, y: number): boolean;
-  canMoveDiagonally(arg1: number, arg2?: number): boolean {
-    const self = this.getCoordinates();
-    const target = arg2 ? { x: arg1, y: arg2 } : this.board.coordinatesOf(arg1);
+  protected isOnSameHorizontal(index: number): boolean {
+    return this.getY() === this.board.getYOf(index);
+  }
 
-    if (!this.onSameDiagonal(target.x, target.y)) {
+  protected isOnSameVertical(index: number): boolean {
+    return this.getX() === this.board.getXOf(index);
+  }
+
+  protected isOnSameDiagonal(index: number): boolean {
+    return (
+      this.getY() + this.getX() ===
+      this.board.getXOf(index) + this.board.getYOf(index)
+    );
+  }
+
+  protected isOnSameAntiDiagonal(index: number): boolean {
+    return (
+      this.getY() - this.getX() ===
+      this.board.getYOf(index) - this.board.getXOf(index)
+    );
+  }
+
+  protected canMoveDiagonally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+
+    if (!this.isOnSameDiagonal(index)) {
       return false;
     }
 
-    const maxY = Math.max(self.y, target.y);
-    const minX = Math.min(self.x, target.x);
-    const maxX = Math.max(self.x, target.x);
+    const maxY = Math.max(selfY, targetY);
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     let x = minX + 1;
     let y = maxY - 1;
 
@@ -123,22 +223,17 @@ export abstract class Piece {
     return true;
   }
 
-  canMoveAntiDiagonally(index: number): boolean;
-  canMoveAntiDiagonally(x: number, y: number): boolean;
-  canMoveAntiDiagonally(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
+  protected canMoveAntiDiagonally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
 
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
-
-    if (!this.onSameAntiDiagonal(targetCoords.x, targetCoords.y)) {
+    if (!this.isOnSameAntiDiagonal(index)) {
       return false;
     }
 
-    const maxY = Math.max(selfCoords.y, targetCoords.y);
-    const minX = Math.min(selfCoords.x, targetCoords.x);
-    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    const maxY = Math.max(selfY, targetY);
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     let x = maxX - 1;
     let y = maxY - 1;
 
@@ -153,96 +248,40 @@ export abstract class Piece {
     return true;
   }
 
-  canMoveHorizontally(index: number): boolean;
-  canMoveHorizontally(x: number, y: number): boolean;
-  canMoveHorizontally(arg1: number, arg2?: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = arg2
-      ? { x: arg1, y: arg2 }
-      : this.board.coordinatesOf(arg1);
-    if (selfCoords.y !== targetCoords.y) return false;
+  protected canMoveHorizontally(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const targetX = this.board.getXOf(index);
 
-    const minX = Math.min(selfCoords.x, targetCoords.x);
-    const maxX = Math.max(selfCoords.x, targetCoords.x);
+    if (!this.isOnSameHorizontal(index)) return false;
+
+    const minX = Math.min(selfX, targetX);
+    const maxX = Math.max(selfX, targetX);
     for (let x = minX + 1; x < maxX; x++) {
-      if (this.board.getPieceAt(x, selfCoords.y) !== null) return false;
+      if (this.board.getPieceAt(x, selfY) !== null) return false;
     }
     return true;
   }
 
-  canMoveVertically(index: number): boolean {
-    const selfCoords = this.getCoordinates();
-    const targetCoords = this.board.coordinatesOf(index);
-    if (selfCoords.x !== targetCoords.x) return false;
+  protected canMoveVertically(index: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const targetY = this.board.getYOf(index);
 
-    const minY = Math.min(selfCoords.y, targetCoords.y);
-    const maxY = Math.max(selfCoords.y, targetCoords.y);
+    if (!this.isOnSameVertical(index)) return false;
+
+    const minY = Math.min(selfY, targetY);
+    const maxY = Math.max(selfY, targetY);
     for (let y = minY + 1; y < maxY; y++) {
-      if (this.board.getPieceAt(selfCoords.x, y) !== null) return false;
+      if (this.board.getPieceAt(selfX, y) !== null) return false;
     }
     return true;
   }
 
-  isAttacked(): boolean {
-    return this.board.isSquareAttackedBy(this.index, this.enemyColor);
+  protected canMoveInRadius(index: number, radius: number): boolean {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+
+    return (
+      Math.abs(selfX - targetX) <= radius && Math.abs(selfY - targetY) <= radius
+    );
   }
-
-  canMove(index: number): boolean {
-    const piece = this.board.getPieceAt(index);
-    if (piece && this.isSameColor(piece)) return false;
-
-    const king = this.board.getKing(this.color);
-    this.board.movePiece(this, index);
-    const isAttacked = king.isAttacked();
-    this.board.undoLastMove();
-
-    return !isAttacked;
-  }
-
-  /**
-   * Возвращает алгебраическую нотацию хода фигуры на клетку.
-   * @param index - Индекс клетки назначения
-   */
-  getMoveNotation(index: number): string {
-    const captureMark = this.board.getPieceAt(index) !== null ? 'x' : '';
-
-    const piecesCanMoveSimilarly = this.board
-      .findPieces({
-        color: this.color,
-        name: this.name,
-      })
-      .filter((piece) => piece !== this && piece.canMove(index));
-    const needPrefix =
-      piecesCanMoveSimilarly.length > 0 || (captureMark && !this.letter);
-    const prefix = needPrefix ? this.board.getFileOf(this.index) : '';
-
-    const targetPosition = `${this.board.getFileOf(index)}${this.board.getRankOf(index)}`;
-
-    return `${prefix}${this.letter}${captureMark}${targetPosition}`;
-  }
-
-  /**
-   * Перемещает фигуру на клетку.
-   * @param index - Индекс клетки назначения.
-   */
-  move(index: number): void {
-    const notation = this.getMoveNotation(index);
-    const move = this.board.movePiece(this, index);
-    this.board.moves.push({ notation, moves: [move] });
-  }
-
-  /**
-   * Проверяет, ходила ли фигура.
-   * @remarks Перебирает массив истории ходов и ищет в нем текущую фигуру.
-   */
-  hasMoved(): boolean {
-    for (const { moves: movedPieces } of this.board.moves) {
-      for (const pieceMove of movedPieces) {
-        if (pieceMove.piece === this) return true;
-      }
-    }
-    return false;
-  }
-
-  abstract getLegalMoves(): number[];
 }

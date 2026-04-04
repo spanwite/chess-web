@@ -1,4 +1,4 @@
-type NestedArray<T> = Array<T | NestedArray<T>>;
+import type { NestedArray } from '../types';
 
 type CnValue = string | null | undefined | number | boolean;
 type CnClass = string | number;

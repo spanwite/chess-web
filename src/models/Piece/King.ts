@@ -1,5 +1,5 @@
-import type { Board, BoardMove } from '../Board';
-import { Piece } from './Piece';
+import type { Board } from '../Board';
+import { Piece, type PieceMove } from './Piece';
 import type { Rook } from './Rook';
 import { PieceName, type PieceColor } from './types';
 
@@ -18,13 +18,16 @@ export class King extends Piece {
    * @param index - Индекс клетки
    */
   protected isCastlingSquare(index: number): boolean {
-    const { x, y } = this.getCoordinates();
-    const target = this.board.coordinatesOf(index);
-    const diffX = Math.abs(x - target.x);
-    const diffY = Math.abs(y - target.y);
-    if (diffY === 0 && diffX === 2) {
+    const [selfX, selfY] = this.getCoordinates();
+    const [targetX, targetY] = this.board.getCoordinatesOf(index);
+
+    const deltaX = Math.abs(selfX - targetX);
+    const deltaY = Math.abs(selfY - targetY);
+
+    if (deltaY === 0 && deltaX === 2) {
       return true;
     }
+
     return false;
   }
 
@@ -37,12 +40,12 @@ export class King extends Piece {
    * @param direction - Направление хода.
    */
   protected findCastlingRook(direction: MoveDirection): Rook | null {
-    const coordinates = this.getCoordinates();
+    const [selfX, selfY] = this.getCoordinates();
 
-    let x = coordinates.x;
-    while (x >= 0 && x < this.board.size.x) {
+    let x = selfX;
+    while (x >= 0 && x < this.board.size) {
       x += direction;
-      const piece = this.board.getPieceAt(x, coordinates.y);
+      const piece = this.board.getPieceAt(x, selfY);
       if (piece && piece.name === PieceName.Rook) {
         return piece;
       }
@@ -76,35 +79,27 @@ export class King extends Piece {
     return [direction, rook];
   }
 
-  canMove(index: number): boolean {
-    const target = this.board.coordinatesOf(index);
-    const { x, y } = this.getCoordinates();
-    return Math.abs(x - target.x) <= 1 && Math.abs(y - target.y) <= 1;
+  override calculateNotation(index: number): string {
+    if (!this.isCastlingSquare(index)) {
+      return super.calculateNotation(index);
+    }
+    const direction = this.getCastlingDirection(index);
+    return direction === -1 ? 'O-O-O' : 'O-O';
   }
 
-  getLegalMoves(): number[] {
-    return this.board.squares.filter(
-      (index) =>
-        (this.canMove(index) || this.canCastle(index)) && super.canMove(index)
-    );
+  override canMove(index: number): boolean {
+    return super.canMoveInRadius(index, 1) || this.canCastle(index) !== false;
   }
 
-  move(index: number): void {
+  override move(index: number): PieceMove[] {
     const canCastle = this.canCastle(index);
 
     if (!canCastle) {
-      super.move(index);
-      return;
+      return super.move(index);
     }
 
     const [direction, rook] = canCastle;
-    const kingMove = this.board.movePiece(this, index);
-    const rookMove = this.board.movePiece(rook, index - direction);
-    const notation = direction === -1 ? 'O-O-O' : 'O-O';
 
-    this.board.moves.push({
-      notation,
-      moves: [kingMove, rookMove],
-    });
+    return [...super.move(index), ...rook.move(index - direction)];
   }
 }
