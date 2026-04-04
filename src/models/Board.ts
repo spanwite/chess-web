@@ -27,11 +27,6 @@ export interface BoardMove {
   movedPieces: PieceMove[];
 }
 
-const FENCollection = {
-  basic: 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w',
-  castling: '4k3/1qq5/8/8/8/8/8/R3K2R w',
-};
-
 export class Board {
   public readonly size = 8;
   public readonly length = this.size * this.size;
@@ -40,10 +35,6 @@ export class Board {
 
   public squares: Square[] = Array(this.length).fill(null);
   public moves: BoardMove[] = [];
-
-  constructor() {
-    this.loadFEN(FENCollection.basic);
-  }
 
   public move(fromIndex: number, toIndex: number): void {
     const movingPiece = this.getPieceAt(fromIndex);
@@ -88,47 +79,6 @@ export class Board {
 
   getRankOf(index: number): number {
     return this.size - this.getYOf(index);
-  }
-
-  loadFEN(fen: string): void {
-    const [rows] = fen.split(' ');
-
-    let index = 0;
-    for (const row of rows.split('/')) {
-      const squares = row.split('');
-      for (const square of squares) {
-        const number = parseInt(square);
-        if (!Number.isNaN(number)) {
-          index += number;
-          continue;
-        }
-
-        const piece = this.createPieceFromFEN(square);
-        if (piece) {
-          piece.place(index);
-        }
-
-        index++;
-      }
-    }
-  }
-
-  getColorFromFEN(char: string): PieceColor {
-    return char === 'w' ? PieceColor.White : PieceColor.Black;
-  }
-
-  createPieceFromFEN(char: string): Piece | null {
-    const constructor = {
-      q: Queen,
-      p: Pawn,
-      k: King,
-      b: Bishop,
-      r: Rook,
-      n: Knight,
-    }[char.toLowerCase()];
-    if (!constructor) return null;
-    const color = isUppercase(char) ? PieceColor.White : PieceColor.Black;
-    return new constructor(color, this);
   }
 
   getPieceAt(index: number): Square;
