@@ -1,9 +1,11 @@
-import { Chess as ChessModel } from '@/models/Chess';
-import Chess from './components/Chess';
+import Game from './components/Chess';
+import ChessProvider from './providers/ChessProvider';
 import './styles/index.css';
 
-const chess = new ChessModel();
-
 export function App() {
-  return <Chess model={chess} />;
+  return (
+    <ChessProvider>
+      <Game />
+    </ChessProvider>
+  );
 }

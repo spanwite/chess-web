@@ -1,20 +1,23 @@
-import type { PieceColor, PieceName } from '@/models/Piece';
-import type { HTMLAttributes } from 'preact';
+import type { PieceColor, PieceName } from '@/modules/Chess';
+import type { HTMLAttributes, Key } from 'preact';
 
-export interface PieceProps extends HTMLAttributes<HTMLSpanElement> {
+export interface PieceData {
   x: number;
   y: number;
   color: PieceColor;
   name: PieceName;
+  key?: Key;
 }
 
-export default function Piece(props: PieceProps) {
-  const { x, y, color, name, ...restProps } = props;
+type Props = PieceData & HTMLAttributes<HTMLSpanElement>;
+
+export default function Piece(props: Props) {
+  const { x, y, color, name, key, ...restProps } = props;
 
   const styles = `translate: ${x * 100}% ${y * 100}%`;
 
   return (
-    <span class='chess-board-piece ' style={styles} {...restProps}>
+    <span class='chess-board-piece ' style={styles} {...restProps} key={key}>
       <img src={`public/pieces/${color}-${name}.svg`} />
     </span>
   );

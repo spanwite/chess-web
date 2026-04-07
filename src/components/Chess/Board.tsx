@@ -1,25 +1,30 @@
-import type { BoardViewModel } from '@/viewmodels/Chess/BoardViewModel';
-import { useViewModel } from '@/hooks/useViewModel';
+import type { ChessViewModel } from '@/models/Chess/ChessViewModel';
 import Piece from './Piece';
 import Square from './Square';
+import { useModel } from '@/hooks/useModel';
 
 export interface BoardProps {
-  model: BoardViewModel;
+  viewModel: ChessViewModel;
 }
 
-export default function Board({ model }: BoardProps) {
-  useViewModel(model);
+export default function Board({ viewModel }: BoardProps) {
+  useModel(viewModel);
+  const state = viewModel.getState();
 
   return (
     <div class='chess-board'>
-      <div class='chess-board__squares' onMouseDown={model.handleSquaresClick}>
-        {model.squares.map((square) => (
-          <Square key={square} {...model.getSquareProps(square)} />
+      <div class='chess-board__squares'>
+        {viewModel.getSquaresData().map(({ key, ...square }) => (
+          <Square
+            {...square}
+            onMouseDown={() => viewModel.handleSquareClick(square.index)}
+            key={key}
+          />
         ))}
       </div>
       <div class='chess-board__pieces'>
-        {model.pieces.map((piece) => (
-          <Piece {...model.getPieceProps(piece)} key={piece.initialIndex} />
+        {state.pieces.map(({ key, ...piece }) => (
+          <Piece {...piece} key={key} />
         ))}
       </div>
     </div>

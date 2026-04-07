@@ -1,24 +1,30 @@
 import { cn } from '@/utils/string';
+import type { HTMLAttributes, Key } from 'preact';
 
-interface SquareProps {
-  label?: number;
-  hasMark?: boolean;
-  isHighlighted?: boolean;
-  isSelected?: boolean;
+export interface SquareData {
+  index: number;
+  hasPiece: boolean;
+  isAvailable: boolean;
+  isSelected: boolean;
+  key?: Key;
 }
 
+type SquareProps = SquareData & HTMLAttributes<HTMLDivElement>;
+
 export default function Square(props: SquareProps) {
-  const { label, hasMark, isHighlighted, isSelected } = props;
+  const { index, isAvailable, isSelected, hasPiece, key, ...restProps } = props;
 
   const classes = cn('chess-board-square', {
-    'is-highlighted': isHighlighted,
     'is-selected': isSelected,
+    'is-available': isAvailable && hasPiece,
   });
 
   return (
-    <div class={classes}>
-      <div class='chess-board-square__label'>{label}</div>
-      {hasMark && <div class='chess-board-square__mark absolute-center' />}
+    <div class={classes} {...restProps} key={key}>
+      <div class='chess-board-square__index'>{index}</div>
+      {isAvailable && !hasPiece && (
+        <div class='chess-board-square__bullet absolute-center' />
+      )}
     </div>
   );
 }

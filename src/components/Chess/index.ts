@@ -1,1 +1,1 @@
-export { default } from './Chess.tsx';
+export { default } from './Game.tsx';

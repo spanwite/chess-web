@@ -1,5 +1,5 @@
-import { PieceName, PieceColor } from './types';
-import type { Board } from '../Board';
+import { PieceName, PieceColor, type IPiece } from './types';
+import type { Board } from './Board';
 import type { NestedArray } from '@/utils/types';
 
 export interface PieceMove {
@@ -13,9 +13,7 @@ export interface PieceMove {
   toIndex: number;
 }
 
-export type Coordinates = { x: number; y: number };
-
-export abstract class Piece {
+export abstract class Piece implements IPiece {
   public initialIndex: number = -1;
 
   /** Индекс клетки, на которой расположена фигура в данный момент */

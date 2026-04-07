@@ -1,19 +1,12 @@
 import type { Board } from '../Board';
-import { Piece, type PieceMove } from './Piece';
+import { Piece, type PieceMove } from '../Piece';
 import type { Rook } from './Rook';
-import { PieceName, type PieceColor } from './types';
-
-/**
- * Направление хода: назад/вперёд или влево/вправо.
- */
-type MoveDirection = -1 | 1;
-
-export type CastlingType = 'kingside' | 'queenside';
-
-export const CastlingNotation: Record<CastlingType, string> = {
-  kingside: 'O-O',
-  queenside: 'O-O-O',
-};
+import {
+  CastlingSide,
+  PieceName,
+  type MoveDirection,
+  type PieceColor,
+} from '../types';
 
 export class King extends Piece {
   constructor(color: PieceColor, board: Board) {
@@ -93,8 +86,9 @@ export class King extends Piece {
     }
 
     const [direction, rook, castlingX, castlingY] = castlingInfo;
-    const castlingType = direction === 1 ? 'kingside' : 'queenside';
-    if (!this.board.castlingRules[this.color][castlingType]) {
+    const castlingSide =
+      direction === 1 ? CastlingSide.King : CastlingSide.Queen;
+    if (!this.board.castlingRules[this.color][castlingSide]) {
       return false;
     }
     const castlingIndex = this.board.getIndexOf(castlingX, castlingY);
@@ -130,13 +124,12 @@ export class King extends Piece {
   }
 
   override calculateNotation(index: number): string {
-    if (!this.getCastlingInfo(index)) {
+    const castlingInfo = this.getCastlingInfo(index);
+    if (!castlingInfo) {
       return super.calculateNotation(index);
     }
-    const direction = this.getCastlingDirection(index);
-    return direction === -1
-      ? CastlingNotation.queenside
-      : CastlingNotation.kingside;
+    const [direction] = castlingInfo;
+    return direction === -1 ? 'O-O-O' : 'O-O';
   }
 
   override canMove(index: number): boolean {

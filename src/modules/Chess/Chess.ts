@@ -1,15 +1,14 @@
 import { isUppercase } from '@/utils/string';
-import { Board, type CastlingRules, type Square } from './Board';
-import { Bishop, King, Knight, Pawn, PieceColor, Queen, Rook } from './Piece';
+import { Board, type Square } from './Board';
+import { Bishop, King, Knight, Pawn, Queen, Rook } from './pieces';
+import { PieceColor } from './types';
 
 export class Chess {
+  static initialFen = 'rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq';
+
   protected board: Board = new Board();
   protected legalMoves: Record<number, number[]> = [];
   protected _turn: PieceColor = PieceColor.White;
-
-  constructor() {
-    this.loadFEN('rnbqknbr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq');
-  }
 
   get squares(): Square[] {
     return this.board.squares;
@@ -28,7 +27,15 @@ export class Chess {
   }
 
   canMove(fromIndex: number, toIndex: number): boolean {
+    const piece = this.getSquare(fromIndex);
+    if (!piece || piece.color !== this.turn) {
+      return false;
+    }
     return this.legalMoves[fromIndex]?.includes(toIndex);
+  }
+
+  getMoves(fromIndex: number): number[] {
+    return this.legalMoves[fromIndex] || [];
   }
 
   move(fromIndex: number, toIndex: number): boolean {

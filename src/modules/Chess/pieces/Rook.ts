@@ -1,6 +1,6 @@
 import type { Board } from '../Board';
-import { Piece } from './Piece';
-import { PieceName, type PieceColor } from './types';
+import { Piece } from '../Piece';
+import { PieceName, type PieceColor } from '../types';
 
 export class Rook extends Piece {
   constructor(color: PieceColor, board: Board) {

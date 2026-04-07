@@ -1,18 +1,11 @@
 import { list } from '@/utils/array';
-import { isUppercase } from '@/utils/string';
+import type { Piece, PieceMove } from './Piece';
 import {
-  Bishop,
-  King,
-  Knight,
-  Pawn,
-  Piece,
+  CastlingSide,
   PieceColor,
   PieceName,
-  Queen,
-  Rook,
-} from './Piece';
-import type { PieceMove } from './Piece/Piece';
-import type { CastlingType } from './Piece/King';
+  type CastlingRights,
+} from './types';
 
 export type Square = Piece | null;
 
@@ -28,27 +21,22 @@ export interface BoardMove {
   movedPieces: PieceMove[];
 }
 
-export type CastlingRules = {
-  [color in PieceColor]: Record<CastlingType, boolean>;
-};
-
 export class Board {
   public readonly size = 8;
-  public readonly length = this.size * this.size;
   public readonly files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
   public readonly ranks = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
-  public squares: Square[] = Array(this.length).fill(null);
+  public squares: Square[] = Array(this.size * this.size).fill(null);
   public moves: BoardMove[] = [];
 
-  public castlingRules: CastlingRules = {
+  public castlingRules: CastlingRights = {
     [PieceColor.White]: {
-      kingside: true,
-      queenside: true,
+      [CastlingSide.King]: true,
+      [CastlingSide.Queen]: true,
     },
     [PieceColor.Black]: {
-      kingside: true,
-      queenside: true,
+      [CastlingSide.King]: true,
+      [CastlingSide.Queen]: true,
     },
   };
 
