@@ -1,10 +1,10 @@
 import { Chess } from '@/modules/Chess';
 import type { Square } from '@/modules/Chess/Board';
-import { PieceColor } from '@/modules/Chess/types';
 import { BaseModel } from '@/utils/BaseModel';
+import type { ChessColor } from './types';
 
 export interface ChessModelState {
-  turn: PieceColor;
+  turn: ChessColor;
   fen: string;
 }
 
@@ -13,7 +13,7 @@ export class ChessModel extends BaseModel<ChessModelState> {
 
   constructor() {
     super({
-      turn: PieceColor.White,
+      turn: 'white',
       fen: '',
     });
     this.chess = new Chess();

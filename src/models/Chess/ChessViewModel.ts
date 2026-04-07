@@ -3,7 +3,6 @@ import type { ChessModel } from './ChessModel';
 import type { Piece } from '@/modules/Chess';
 import type { PieceData } from '@/components/Chess/Piece';
 import type { SquareData } from '@/components/Chess/Square';
-import type { BaseModel } from '@/utils/BaseModel';
 
 interface ChessViewModelState {
   selectedSquare: number;
